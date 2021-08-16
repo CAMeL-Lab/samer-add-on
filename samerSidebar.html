@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link href="https://ssl.gstatic.com/docs/script/css/add-ons.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk" crossorigin="anonymous">
+
+    <?!= include('styles.css.html'); ?>
+    <?!= include('lex.pos.lm.js'); ?> 
+    <?!= include('levels.js'); ?>
+    <?!= include('dictiotable.js'); ?>
+    <?!= include('dictioprefix.js'); ?>
+    <?!= include('dictiosuffix.js'); ?>
+    <?!= include('dictiostem.js'); ?>
+    <?!= include('lex.pos.eng.gloss'); ?>
+    <?!= include('hypernym_lemmas.js.html'); ?>
+    <?!= include('synonym_lemmas.js.html'); ?>
+    <?!= include('opposite_lemmas.js.html'); ?>
+    <?!= include('almor.js'); ?>
+    <?!= include('lexscript.js'); ?>
+    <?!= include('eventHandlers.js.html'); ?>
+  </head>
+
+  <body onbeforeunload="return clearDocument()">
+    <div class="sidebar">
+
+      <div id="header">
+        <h2>Readability Analysis</h2>
+        <div id="button-bar">
+		      <button class="blue header" id="doc-analysis-button">Doc Level</button>
+          <button class="blue header" id="word-analysis-button">Word Level</button>
+          <button class="grey" id="clear">Clear</button>
+        </div>
+      </div>
+      <div id="errorDiv"></div>
+      <div class="success"></div>
+      <hr>
+
+      <div class="doc-level-analysis">
+        <div class="inner-header">
+          <h3 class="title">Doc Level Analysis</h3>
+          <button id="doc-level-toggle" class="blue toggle">Hide</button>
+        </div>
+        <div id="doc-level-inner">
+          <div id="doc-level-token">
+            <div class="wrapper">
+              <div class="first">
+                <label> &nbsp; </label><br/>
+                <label><b>Names</b></label><br/>
+                <label><b>Level 1</b></label><br/>
+                <label><b>Level 2</b></label><br/>
+                <label><b>Level 3</b></label><br/>
+                <label><b>Level 4</b></label><br/>
+                <label><b>Level 5</b></label><br/>
+                <label><b>Unknown</b></label><br/>
+              </div>
+              <div class="second">
+                <label class="smaller"> Current Doc &#37;</label><br/>
+                <div class="chart">
+                  <div class="l0 " style="width: 0px;"></div>
+                  <div class="l1 " style="width: 0px;"></div>
+                  <div class="l2 " style="width: 0px;"></div>
+                  <div class="l3 " style="width: 0px;"></div>
+                  <div class="l4 " style="width: 0px;"></div>
+                  <div class="l5 " style="width: 0px;"></div>
+                  <div class="l6 " style="width: 0px;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="cache"></div>
+            <div class="score"></div>
+            <div class="infoAbove"></div>
+            <div class="infoAt"></div>
+            <div class="infoBelow"></div>
+          </div>
+
+          <div id="doc-level-type">
+            <div class="wrapper">
+              <div class="first">
+                <label> &nbsp; </label><br/>
+                <label><b>Names</b></label><br/>
+                <label><b>Level 1</b></label><br/>
+                <label><b>Level 2</b></label><br/>
+                <label><b>Level 3</b></label><br/>
+                <label><b>Level 4</b></label><br/>
+                <label><b>Level 5</b></label><br/>
+                <label><b>Unknown</b></label><br/>
+              </div>
+              <div class="second">
+                <label class="smaller"> Current Doc &#37;</label><br/>
+                <div class="chart">
+                  <div class="l0 " style="width: 0px;"></div>
+                  <div class="l1 " style="width: 0px;"></div>
+                  <div class="l2 " style="width: 0px;"></div>
+                  <div class="l3 " style="width: 0px;"></div>
+                  <div class="l4 " style="width: 0px;"></div>
+                  <div class="l5 " style="width: 0px;"></div>
+                  <div class="l6 " style="width: 0px;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="cache"></div>
+            <div class="score"></div>
+            <div class="infoAbove"></div>
+            <div class="infoAt"></div>
+            <div class="infoBelow"></div>
+          </div>
+          <div class="btn-group">
+            <button id="token" class="grey selected">By Token</button>
+            <button id="type" class="grey">By Type</button>
+          </div>
+        </div>
+        <hr>
+      </div>
+
+
+      <div class="word-level-analysis">
+        <div class="inner-header">
+          <h3 class="title">Word Level Analysis</h3>
+          <button id="word-level-toggle" class="blue toggle">Hide</button>
+        </div>
+        <div class="moreSol">
+          <div class="level-0 level-div"> 
+            <h3 class="level-text">Name</h3> 
+            <button class="useSol"> Assign </button> 
+            <button class="replaceAll"> Assign all </button>
+            <div class="level-0 level-options"> </div>
+          </div>
+          <hr>
+          <div class="level-1 level-div"> 
+            <h3 class="level-text"> Level 1 </h3> 
+            <button class="useSol"> Assign </button> 
+           <button class="replaceAll"> Assign all </button>
+            <div class="level-1 level-options"> </div>
+          </div>
+          <hr>
+          <div class="level-2 level-div"> 
+            <h3 class="level-text"> Level 2 </h3> 
+            <button class="useSol"> Assign </button> 
+            <button class="replaceAll"> Assign all </button>
+            <div class="level-2 level-options"> </div>
+          </div>
+          <hr>
+          <div class="level-3 level-div"> 
+            <h3 class="level-text"> Level 3 </h3> 
+            <button class="useSol"> Assign </button> 
+            <button class="replaceAll"> Assign all </button>
+            <div class="level-3 level-options"> </div>
+          </div>
+          <hr>
+          <div class="level-4 level-div"> 
+            <h3 class="level-text"> Level 4 </h3> 
+            <button class="useSol"> Assign </button> 
+            <button class="replaceAll"> Assign all </button>
+            <div class="level-4 level-options"> </div>
+          </div>
+          <hr>
+          <div class="level-5 level-div"> 
+            <h3 class="level-text"> Level 5 </h3> 
+            <button class="useSol"> Assign </button> 
+            <button class="replaceAll"> Assign all </button>
+            <div class="level-5 level-options"> </div>
+          </div>
+        </div>
+      </div>
+	</div>
+  </body>
+</html>
+
+

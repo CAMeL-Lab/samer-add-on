@@ -1,0 +1,13 @@
+lex.pos.lm.js.html
+levels.js.html
+dictioprefix.js.html
+dictiostem.js.html
+dictiosuffix.js.html
+dictiotable.js.html
+lex.pos.eng.gloss.html
+.DS_Store
+.clasp.json
+.claspignore
+opposite_lemmas.js.html
+synonym_lemmas.js.html
+hypernym_lemmas.js.html

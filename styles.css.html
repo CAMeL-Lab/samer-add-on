@@ -1,0 +1,196 @@
+<style>
+  body {
+    line-height:  2em;
+    margin-top: 0 !important;
+  }
+  .lightblue{ color: '#ccccff'; }
+  .lightgreen{ color: '#ccffcc'; }
+  .yellow{ color: '#ffff99'; }
+  .orange{ color: '#ffa500'; }
+  .red{ color: '#ff0000'; }
+  .unknown{ color: '#cfcfcf'; }
+  
+  .smaller{ font-size: 11px; font-weight: bold; text-decoration:underline;}
+  
+  .whitebg{ border: 1px solid #ccc; background-color: '#fff'; color: '#000'; }
+  .greenbg{ background-color: '#ccffcc'; color: '#000'; }
+  .yellowbg{ background-color: '#ffff99'; color: '#000'; }
+  .orangebg{ background-color: '#ffe5b4'; color: '#000'; }
+  .redbg{ background-color: '#ffcccc'; color: '#000';}
+  .unknownbg{ background-color: '#cfcfcf'; color: '#000'; }
+  
+  button.blue{
+    margin-right: 12px;
+  }
+
+  button.blue.header {
+    margin:  5px 12px 5px 0;
+  }
+
+  .grey {
+    /*display:  block;*/
+    margin:  5px 0;
+  }
+
+  #button-bar {
+    margin:  10px 0;
+  }
+  
+  .chart div {
+    font: 12px sans-serif;
+    /*line-height:13px;*/
+    font-weight: bold;
+    background-color: #550088;
+    text-align: right;
+    padding: 2px 1px;
+    margin: 2px 0;
+    color: white;
+    }
+
+    .wrapper {
+        width: 100%;
+        overflow: hidden;
+    }
+    #zeroth{
+      text-align: right;
+      width: 75px;
+      float:left;
+      margin-right:5px;
+      line-height:21px;
+    }
+    .first{
+      text-align: right;
+      width: 85px;
+      float:left;
+      margin-right:5px;
+      line-height:21px;            
+    }
+    .second{
+        float:left;
+        width: auto;
+        padding-right:5px;
+        overflow: hidden;
+        line-height:20px;
+    }
+
+    div.best-option {
+      background-color: rgb(218, 222, 217);
+    }
+
+    div.cache {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    .moreSol {
+      color: black;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    div.option .lemma{
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    div.option .pos {
+      font-style: italic;
+    }
+
+   div.level-div {
+     padding: 5px 10px;
+   }
+
+    div#errorDiv{
+      color: red;
+      font-size: 12px;
+    }
+
+    div.success{
+      color: green;
+      font-size: 12px;
+    }
+
+    h3.title {
+      display:  inline;
+      margin: 0;
+    }
+
+    .option {
+      /* margin-top: 10px; */
+      line-height: 1.6;
+      margin-bottom: 5px;
+    }
+
+    button.useSol, button.replaceAll, h3.level-text {
+      display: inline;
+    }
+
+    div.level-options{
+      margin-top: 10px;
+    }
+
+    button.toggle {
+      /*float: right;*/
+      margin-bottom: 10px;
+    }
+
+    h3.level-text {
+      margin-right: 20px;
+    }
+
+    .btn-group {
+      margin: auto;
+    }
+
+    div.inner-header {
+      /*overflow:  hidden;*/
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .btn-group button {
+      cursor: pointer; /* Pointer/hand icon */
+      float: left; /* Float the buttons side by side */
+    }
+
+    .btn-group button:not(:last-child) {
+      border-right: none; /* Prevent double borders */
+    }
+
+    /* Clear floats (clearfix hack) */
+    .btn-group:after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+
+    button.selected {
+      /*background-color: #9e9e9e !important;*/
+      background: #9e9e9e;
+      color:  black;
+    }
+
+    div.sidebar {
+      padding-top: 0;
+    }
+
+    #doc-level-inner {
+      margin-bottom:  10px;
+    }
+
+	.toggle-suggestions {
+		color: grey;
+		margin-right: 5px;
+	}
+
+  .suggestions {
+    margin-left: 15px;
+    line-height: 1.3em;
+  }
+
+  .rel-title {
+    font-style: italic;
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,279 @@
+<!-- lexscript.js.html -->
+<!-- source: stackoverflow.com/questions/11344167/use-project-javascript-and-css-files-in-a-google-apps-script-web-app -->
+<!-- official best practices page: developers.google.com/apps-script/guides/html/best-practices -->
+<script>
+  // done here 
+  const level_proper = 0;
+  const level_1 = 1;
+  const level_2 = 2;
+  const level_3 = 3;
+  const level_4 = 4;
+  const level_5 = 5;
+  const level_unknown = 6;
+// Q: What does this function do?
+// A: it converts a text into a sequence of tokens.
+  function buildTokenIndexList(txt){
+    var toks = [];
+    var nextTok = "";
+    var nextIdx = 0;
+    var isNewTok = true;
+    for(var c in txt){
+      if(isSpace(txt[c])){     
+        // if token not null, insert token into array
+        if((nextTok.length>0) && !isPunc(nextTok) && !isNum(nextTok)){
+          var tok = {};
+          tok.str = nextTok;
+          tok.idx = nextIdx;
+          toks.push(tok);
+        }
+        // reset token or clear token object
+        nextTok = "";
+        nextIdx = 0;
+        // set isNewTok to true 
+        isNewTok = true;
+      }
+      else{
+        // if isNewTok is true : set index as starting index of token THEN set isNewTok=false
+        if(isNewTok){
+          nextIdx = c;
+          isNewTok = false;
+        }
+        // append character to token word
+        nextTok += txt[c];
+      }
+    }
+    // final word to be inserted if the text doesnt end with a whitespace
+    if(nextTok.length > 0){
+      var tok = {};
+      tok.str = nextTok;
+      tok.idx = nextIdx;
+      toks.push(tok);
+    }
+    return toks;
+  }
+  
+  function buildTokenSet(tokObjs){
+    var uniquetoklist = [];
+    for(var x in tokObjs){
+      // Add the token to the uniquetoklist if it doesn't exist there already
+      if(uniquetoklist.indexOf(tokObjs[x].str) < 0){
+        uniquetoklist.push(tokObjs[x].str);
+      }
+    }
+    return uniquetoklist;
+  }
+  
+  // run analyzeSolutions on each token to find level
+   function analyzeTokenSet(tokSet){
+    var solutionSet = {};
+    for(var i in tokSet){
+      var sol = analyzeSolutions(tokSet[i]);
+      solutionSet[sol.best_option.word] = sol;
+    }
+    return solutionSet;
+  } 
+ 
+  
+  function buildMarkupList(tokIdxList, SolSet){
+    var markupList = [];
+    for(var i in tokIdxList){
+      var mrkp = { };
+      mrkp.str = tokIdxList[i].str;
+      mrkp.idx = tokIdxList[i].idx;
+      mrkp.endidx = (parseInt(tokIdxList[i].idx) + parseInt(tokIdxList[i].str.length)) -1;
+      mrkp.lvl = SolSet[mrkp.str].best_option.level;
+      markupList.push(mrkp);
+    }
+    return markupList;
+  }
+
+
+// Q: What is meant by Covered Level?
+// A: Covered level refers to how many of the words can be considered known by readers at a certain level. So, if a reader is able to read at level 3. She knows words from level 3, level 2 and level 1.  
+
+//Q: Where can the user indicate their desired level?
+  function numCoveredWords(markupList, coveredLvl){
+  // Covered level is in one-based count 
+  // Markup level is zero-based: 0-4 are levels 1 to 5 vocab; 5 is proper; 6 is unknown  (not the best idea to have them different).
+  
+  // Proper Nouns (zero-based 5) are included for all levels
+  // OOV is level 6; and is only added for highest readability level. 
+  
+  // desired level 3 takes markup levels {0,1,2 and 5}
+  // desired level 4 takes markup levels {0,1,2,3 and 5}  
+  // desired level 5 takes markup levels {0,1,2,3,4,5 and 6}  
+  
+    // done
+    var targetWordCount = 0;
+    for(i in markupList){
+      if (coveredLvl == level_5){targetWordCount++;} // everything is covered in level 5, including OOV.
+      else if (markupList[i].lvl == level_proper){targetWordCount++;} //Proper Nouns allowed for all levels 
+      else if (markupList[i].lvl <= coveredLvl){targetWordCount++;} // at or below the level 
+    }
+    return targetWordCount;   
+}
+  
+  function numWords(markupList, coveredLvl){
+  // Covered level is in one-based count 
+  // Markup level is zero-based: 0-4 are levels 1 to 5 vocab; 5 is proper; 6 is unknown  (not the best idea to have them different).
+  
+  // Proper Nouns (zero-based 5) are included for all levels
+  // OOV is level 6; and is only added for highest readability level. 
+  // desired level 1 takes markup levels {0 and 5}
+  // desired level 2 takes markup levels {1}
+  // desired level 3 takes markup levels {2}
+  // desired level 4 takes markup levels {3}  
+  // desired level 5 takes markup levels {4 and 6}  
+  
+  // done
+    var targetWordCount = 0;
+    for(i in markupList){
+        if ((markupList[i].lvl==level_proper)&&(coveredLvl==level_1)){targetWordCount++;}
+        else if ((markupList[i].lvl==level_unknown)&&(coveredLvl==level_5)){targetWordCount++;}
+        else if (markupList[i].lvl==coveredLvl){targetWordCount++;} 
+    }
+    return targetWordCount;   
+  }
+  
+  
+  function chartTokenStats(tokList, chart_div){
+    let counts = [0,0,0,0,0,0,0,0];
+
+    $.each(tokList, function(i, val){
+      counts[parseFloat(tokList[i].lvl)]+=1;
+    });
+
+    const levels = counts.map(function(count){
+     let stat = 100*count/tokList.length;
+     return Math.round((stat+Number.EPSILON)*10)/10
+    })
+    
+    drawChart(levels, tokList.length, chart_div);
+  }
+
+
+  function getUniqueLemmas(soluSet){
+    let uniqueLemmas = []
+    let uniqueLemmaSols = []
+    for (let word of Object.keys(soluSet)){
+      if (soluSet[word].best_option.lemma){
+        let {lemma, level} = soluSet[word].best_option
+        if (!uniqueLemmas.includes(lemma)){
+          uniqueLemmas.push(lemma)
+          uniqueLemmaSols.push({str: lemma, lvl: level})
+        }
+      } else {
+        let {level} = soluSet[word].best_option
+        if(!uniqueLemmas.includes(word)){
+          uniqueLemmas.push(word)
+          uniqueLemmaSols.push({str: word, lvl: level})
+        }
+      }
+    }
+    return uniqueLemmaSols
+  }
+  
+  
+function get_rel_words(word, my_set, max_level){
+  let synset = {}
+  for (let i = 0; i < max_level; i++){
+    synset[String(i)] = []
+  }
+	if(Object.keys(my_set).includes(word)){
+		syns = my_set[word]
+		for(let syn of syns){
+			if (Object.keys(lexpos_level).includes(syn) && lexpos_level[syn] < max_level){
+				synset[String(lexpos_level[syn])].push(syn);
+			}
+		}
+	}
+	return synset;			
+}
+
+function is_empty(rel_set){
+  for (let level in rel_set){
+    if(rel_set[level].length !== 0)
+      return false;
+  }
+  return true;
+}
+
+  function clearSidebar(){
+    $('div.doc-level-analysis').hide();
+    $('div#doc-level-type').hide();
+    $('div.word-level-analysis').hide();
+    $('div#errorDiv').text("")
+    $("div.success").text("")
+  }
+
+
+  function drawChart(levels, tot, div){
+    var wcss = 150;
+    const [l0, l1, l2, l3, l4, l5, l6] = levels;
+    $(`${div} div.l0`).text(l0 + '%');
+	  var w0 = l0*wcss/100;
+	  $(`${div} div.l0`).css('width', w0.toString()+'px');
+    $(`${div} div.l0`).css('background-color','#ccccff');
+    $(`${div} div.l0`).css('color','#000');
+    
+    $(`${div} div.l1`).text(l1 + '%');
+	  var w1 = l1*wcss/100;
+	  $(`${div} div.l1`).css('width', w1.toString()+'px');
+    $(`${div} div.l1`).css('border', '1px solid #ccc');
+    $(`${div} div.l1`).css('background-color','#fff');
+    $(`${div} div.l1`).css('color','#000');
+    
+	  $(`${div} div.l2`).text(l2 + '%');
+	  var w2 = l2*wcss/100;
+	  $(`${div} div.l2`).css('width', w2.toString()+'px');
+    $(`${div} div.l2`).css('background-color','#89CFF0');
+    $(`${div} div.l2`).css('color','#000');
+    
+    $(`${div} div.l3`).text(l3 + '%');
+	  var w3 = l3*wcss/100;
+	  $(`${div} div.l3`).css('width', w3.toString()+'px');
+    $(`${div} div.l3`).css('background-color','#ccffcc');
+    $(`${div} div.l3`).css('color','#000');
+			
+    $(`${div} div.l4`).text(l4 + '%');
+    var w4 = l4*wcss/100;
+    $(`${div} div.l4`).css('width', w4.toString()+'px');
+    $(`${div} div.l4`).css('background-color','#ffff99');
+    $(`${div} div.l4`).css('color','#000');
+    
+    $(`${div} div.l5`).text(l5 + '%');
+	  var w5 = l5*wcss/100;
+	  $(`${div} div.l5`).css('width', w5.toString()+'px');
+    $(`${div} div.l5`).css('background-color','#ffcccc');
+    $(`${div} div.l5`).css('color','#000');
+    
+    $(`${div} div.l6`).text(l6 + '%');
+	  var w6 = l6*wcss/100;
+	  $(`${div} div.l6`).css('width', w6.toString()+'px');
+    $(`${div} div.l6`).css('background-color','#cfcfcf');
+    $(`${div} div.l6`).css('color','#000');
+  }
+  
+
+/* Utilities for building token set*/
+  function isArabic(str) {
+    var chars = str.match("[\u0600-\u06ff]|[\u0750-\u077f]|[\ufb50-\ufc3f]|[\ufe70-\ufefc]");
+    return !(chars==null);
+  }
+  
+ function isNum(num){
+  return !isNaN(num);
+}
+
+function isPunc(str) {
+    return str.match(/^\s*[\•\–\-\=\"\_\:\#\@\!\—\?\؟\،\^\/\(\)\[\]\%\;\\\+\.\,\…]+\s*$/);
+}
+  
+  function isSpace(str){
+    var pattern = /\s+/; // space only // older regex capital S is for nonwhitespace /\S+/g
+    var thetest = pattern.test(str);
+    return pattern.test(str);
+  }
+
+
+</script>

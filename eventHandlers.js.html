@@ -1,0 +1,330 @@
+    <script>
+    
+    $(document).ready(function() {
+      clearDocument();
+      clearSidebar();
+		});
+        
+    $(window).unload(function(){
+      clearDocument();
+    });
+
+    function clearDocument(){
+      google.script.run.clearAnnotation();
+    }
+
+    //Event handlers
+    $(function() {
+    
+    $('div.level-options').on('click', 'i.toggle-suggestions', function(){
+      const parent_option_div = $(this).parent()
+      const this_div = $(parent_option_div).children('div.suggestions')
+      if($(this_div).is(":hidden")){
+        $(this_div).show()
+        $(this).removeClass('fa-plus')
+        $(this).addClass('fa-minus')
+      } else {
+        $(this_div).hide()
+        $(this).removeClass('fa-minus')
+        $(this).addClass('fa-plus')
+      }
+	})
+    	
+      $('button#doc-analysis-button').click(function() {
+        $("div.success").text("")
+        $("div#errorDiv").text("")
+        var l = $('input[name=target]:checked').val();
+        google.script.run.withSuccessHandler((x) => {
+          const [soluSet, tokIdxList] = runMorphAnalyzer(x)
+          const markList = annotate(tokIdxList, soluSet, false)
+          const uniqueLemmas = getUniqueLemmas(soluSet)
+          writeDocLevelHTML(markList)
+          writeDocLevelHTML(uniqueLemmas, "type")
+        }).getTextStr();
+      });
+      
+      $("button#word-analysis-button").click(function(){
+        $("div.success").text("")
+        $("div#errorDiv").text("")
+        google.script.run.withSuccessHandler((x) => {
+          const [soluSet, tokIdxList] = runMorphAnalyzer(x)
+          if (tokIdxList.length !== 1)
+            showError("Select a word to perform word-level analysis.")
+          else {
+            annotate(tokIdxList, soluSet, false)
+            writeWordLevelHTML(soluSet)
+          } 
+        }).getTextStr();
+      });
+
+      $('button#clear').click(function() {
+        clearSidebar();
+        clearDocument();          
+      });
+
+      $('button#word-level-toggle').click(function(){
+          $("div.moreSol").toggle()
+          if($('div.moreSol').is(":hidden")){
+            $('button#word-level-toggle').text('Show')
+          } else {
+            $('button#word-level-toggle').text('Hide')
+          }
+      })
+
+      $('button#doc-level-toggle').click(function(){
+          $("div#doc-level-inner").toggle()
+          if($("div#doc-level-inner").is(":hidden")){
+            $('button#doc-level-toggle').text('Show')
+          } else {
+            $('button#doc-level-toggle').text('Hide')
+          }
+      })
+
+      $("div.moreSol").on("click", "button.replaceAll", function(){
+          $("div.success").text("")
+          $("div#errorDiv").text("")
+          const optionDiv = $(this).parent();
+          let level = "";
+          const classes = optionDiv.attr("class").split(" ")
+          for(let _class of classes){
+            if (_class.includes('level')){
+              level = _class.split('-')[1]
+              break;
+            }
+          }
+          google.script.run.withSuccessHandler((text) => {
+            if (text.match(/^#[٠١٢٣٤٥]#/))
+              text = text.replace(/#[٠١٢٣٤٥]#/, "")
+            // If more than one word selected or no text selected
+            if (text.split(" ").length > 1){
+              return $("div#errorDiv").text("Please select a single word to annotate")
+            }
+            google.script.run.withSuccessHandler((res) => {
+              clearSidebar();
+              google.script.run.withSuccessHandler((num_instances)=>{
+                $(".success").text(`Successfully replaced ${num_instances} instances of this word with level ${level}.`)
+              }).highlightText(text, level)
+            }).replaceAll(text, level)
+          }).getTextStr()
+      });
+
+      $("div.moreSol").on("click", "button.useSol", function(){
+        $("div.success").text("")
+        $("div#errorDiv").text("")
+        const optionDiv = $(this).parent();
+        let level = "";
+        const classes = optionDiv.attr("class").split(" ")
+        for(let _class of classes){
+          if (_class.includes('level')){
+            level = _class.split('-')[1]
+            break;
+          }
+        }
+        google.script.run.withSuccessHandler((str)=>{
+          const [soluSet, tokIdxList] = runMorphAnalyzer(str)
+          const markList = annotate(tokIdxList, soluSet, true)
+          writeWordLevelHTML(soluSet);
+        })
+        .withFailureHandler((msg)=>{
+          showError(msg)
+          })
+        .addHash(level)
+      });
+
+      $("button#token").click(function(){
+        $('div#doc-level-token').show()
+        $('div#doc-level-type').hide()
+        $("button#token").addClass('selected')
+        $("button#type").removeClass('selected')
+      })
+
+      $("button#type").click(function(){
+        $('div#doc-level-type').show()
+        $('div#doc-level-token').hide()
+        $("button#type").addClass('selected')
+        $("button#token").removeClass('selected')
+      })
+    
+    });
+
+	function writeLemmaSuggestionsHTML(lemma_pos, max_level){
+		const syns = get_rel_words(lemma_pos, synonyms, max_level)
+		const ants = get_rel_words(lemma_pos, antonyms, max_level)
+		const hyp = get_rel_words(lemma_pos, hypernyms, max_level)
+		let div = '<div class="suggestions">'
+    let rels = {"Synonyms": syns, "Antonyms": ants, "Hypernyms": hyp}
+    for (const name in rels){
+      div = div + writeSetHTML(lemma_pos, name, rels[name])
+    }
+    if (div === '<div class="suggestions">')
+      div = div + "<p>No suggestions available</p>"
+		div = div + '</div>'
+		return div
+	}
+	
+	function writeSetHTML(lemma_pos, set_name, rel_set){
+    if(is_empty(rel_set))
+      return '';
+    let div = `<div class='${set_name}'>`
+		const title = `<p class="rel-title"> ${set_name} </p>`
+		div = div + title;
+		for (let level in rel_set){
+        if(rel_set[level].length){
+          div = div + `<p>Level ${level}: `
+          for (let rel_lemma_pos of rel_set[level]){
+            let [rel_lemma, rel_pos] = rel_lemma_pos.split("+")
+            div = div + `${toUnicode(rel_lemma)} (${rel_pos}), `
+          }
+        }
+		}
+		div = div + "</p></div>"
+		return div;
+	}
+
+    function writeWordLevelHTML(soluSet){
+      const word = Object.keys(soluSet)[0]
+      const options = soluSet[word].options
+      $('div.level-div').removeClass('best-option')
+      $('div.level-options').empty()
+      for(let i = 0; i <= 5; i++){
+        let level_i = options.filter(item => item.level === i)
+        let is_best = soluSet[word].best_option.level === i ? 'best-option' : '';
+        $(`div.level-${i}.level-div`).addClass(is_best)
+
+        for (let option of level_i){
+          let newDiv = displayOptionDiv(word, option, is_best)
+          newDiv.children('.lemma').text(`${toUnicode(option.lemma)}`)
+            let relWordsDiv = writeLemmaSuggestionsHTML(option.lp, option.level)
+            $(relWordsDiv).appendTo(newDiv).hide()
+        }
+      }
+      $("div.word-level-analysis").show();
+    }
+
+    function displayOptionDiv(word, option, best=false){
+      let div = ""
+      if(option.lp !== ""){
+	let plus_icon = '<i class="fas fa-plus toggle-suggestions"></i>' ;
+        let lp = `<span class='lemma'> </span>`
+        let pos = `<span class='pos'> (${option.pos}) </span>`
+        let gloss = `<span class='gloss'> ${option.gloss} </span>`
+        div = `<div class="option level-${option.level}" id="${encodeURI(option.lp)}"> ${plus_icon} ${lp} ${pos}: ${gloss}</div>`
+      } 
+      return $(div).appendTo(`div.level-${option.level}.level-options`)
+    }
+      
+    function runMorphAnalyzer(str){
+      let target = $('input[name=target]:checked').val();        
+      let tokIdxList = buildTokenIndexList(str);
+      let tokset = buildTokenSet(tokIdxList); //word and word locations and also make sure each token is unique
+      let solutionSet = analyzeTokenSet(tokset); // get lemmas and levels of each one 
+      const uniqueLemmas = getUniqueLemmas(solutionSet)
+      return [solutionSet, tokIdxList]
+    }
+
+    function annotate(tokIdxList, soluSet, colorLevel1){
+      let markList = buildMarkupList(tokIdxList, soluSet);
+      google.script.run.annotateDoc(markList,0,markList.length,'byword', colorLevel1);
+      return markList
+    }
+        
+    function processText(str, colorLevel1){
+      let [soluSet, tokIdxList] = runMorphAnalyzer(str)
+      let markList = annotate(tokIdxList, soluSet, colorLevel1)
+      return {soluSet, markList}
+    }
+
+    function showError(msg) {
+      $('div#errorDiv').text(msg);
+    }
+          
+    function writeDocLevelHTML(markList, token_level="token"){
+
+      let chart_div = "";
+
+      if (token_level === "token"){
+        chart_div = "div#doc-level-token"
+      }
+      else {
+        chart_div = "div#doc-level-type"
+      }
+
+      $(`${chart_div} div.cache`).text("Total word count: " + markList.length);
+  
+      // numCoveredWord X = words in levels Proper + 1 to X
+      var numCoveredWord5 = numCoveredWords(markList,5);
+      var numCoveredWord4 = numCoveredWords(markList,4);
+      var numCoveredWord3 = numCoveredWords(markList,3);
+      var numCoveredWord2 = numCoveredWords(markList,2);
+      var numCoveredWord1 = numCoveredWords(markList,1);
+
+      var percentCoveredWord5 =  Math.round(numCoveredWord5/markList.length*1000)/10;
+      var percentCoveredWord4 =  Math.round(numCoveredWord4/markList.length*1000)/10;
+      var percentCoveredWord3 =  Math.round(numCoveredWord3/markList.length*1000)/10;
+      var percentCoveredWord2 =  Math.round(numCoveredWord2/markList.length*1000)/10;
+      var percentCoveredWord1 =  Math.round(numCoveredWord1/markList.length*1000)/10;
+      
+      var numWords1 = numCoveredWord1;
+      var numWords2 = numCoveredWord2-numCoveredWord1;
+      var numWords3 = numCoveredWord3-numCoveredWord2;
+      var numWords4 = numCoveredWord4-numCoveredWord3;
+      var numWords5 = numCoveredWord5-numCoveredWord4;
+      
+      var percentWords1 = Math.round(numWords1/markList.length*1000)/10;
+      var percentWords2 = Math.round(numWords2/markList.length*1000)/10;
+      var percentWords3 = Math.round(numWords3/markList.length*1000)/10;
+      var percentWords4 = Math.round(numWords4/markList.length*1000)/10;
+      var percentWords5 = Math.round(numWords5/markList.length*1000)/10;
+      
+
+      var numWordsAbove1 = numCoveredWord5 - numWords1;
+      var numWordsAbove2 = numCoveredWord5 - numCoveredWord2;
+      var numWordsAbove3 = numCoveredWord5 - numCoveredWord3;
+      var numWordsAbove4 = numCoveredWord5 - numCoveredWord4;
+      var numWordsAbove5 = 0;
+      
+      var percentWordsAbove1 = Math.round(numWordsAbove1/markList.length*1000)/10;
+      var percentWordsAbove2 = Math.round(numWordsAbove2/markList.length*1000)/10;
+      var percentWordsAbove3 = Math.round(numWordsAbove3/markList.length*1000)/10;
+      var percentWordsAbove4 = Math.round(numWordsAbove4/markList.length*1000)/10;
+      var percentWordsAbove5 = Math.round(numWordsAbove5/markList.length*1000)/10;
+
+      if (percentCoveredWord1 == 100){
+          $(`${chart_div} div.score`).text("✅ Easy Text")
+          $(`${chart_div} div.infoAbove`).text("")
+          $(`${chart_div} div.infoAt`).text("At Level 1 | " + numWords1 + " words | " + percentWords1 +"%");
+          $(`${chart_div} div.infoBelow`).text("");
+      } else if ((percentWords2 <= 5)&&(percentCoveredWord1>=95)){
+        $(`${chart_div} div.score`).text("✅ Target Level 2 ")
+        $(`${chart_div} div.infoAbove`).text("Above Level 2 | " + numWordsAbove2 + " words | " + percentWordsAbove2 +"%");
+        $(`${chart_div} div.infoAt`).text("   At Level 2 | " + numWords2 + " words | " + percentWords2 +"%");
+        $(`${chart_div} div.infoBelow`).text("Below Level 2 | " + numCoveredWord1 + " words | " + percentCoveredWord1 +"%");
+      } else if ((percentWords3 <= 5)&&(percentCoveredWord2>=95)){
+        $(`${chart_div} div.score`).text("✅ Target Level 3 ")
+        $(`${chart_div} div.infoAbove`).text("Above Level 3 | " + numWordsAbove3 + " words | " + percentWordsAbove2 +"%");
+        $(`${chart_div} div.infoAt`).text("   At Level 3 | " + numWords3 + " words | " + percentWords3 +"%");
+        $(`${chart_div} div.infoBelow`).text("Below Level 3 | " + numCoveredWord2 + " words | " + percentCoveredWord2 +"%");
+      }else if ((percentWords4 <= 5)&&(percentCoveredWord3>=95)){
+        $(`${chart_div} div.score`).text("✅ Target Level 4 ")
+        $(`${chart_div} div.infoAbove`).text("Above Level 4 | " + numWordsAbove4 + " words | " + percentWordsAbove4 +"%");
+        $(`${chart_div} div.infoAt`).text("   At Level 4 | " + numWords4 + " words | " + percentWords4 +"%");
+        $(`${chart_div} div.infoBelow`).text("Below Level 4 | " + numCoveredWord3 + " words | " + percentCoveredWord3 +"%");   
+      }else if ((percentWords5 <= 5)&&(percentCoveredWord4>=95)){
+        $(`${chart_div} div.score`).text("✅ Target Level 5 ")
+        $(`${chart_div} div.infoAbove`).text("")
+        $(`${chart_div} div.infoAt`).text("   At Level 5 | " + numWords5 + " words | " + percentWords5 +"%");
+        $(`${chart_div} div.infoBelow`).text("Below Level 5 | " + numCoveredWord4 + " words | " + percentCoveredWord4 +"%");
+      }else {
+        $(`${chart_div} div.score`).text("✅ Hard Text");  
+        $(`${chart_div} div.infoAbove`).text("")
+        $(`${chart_div} div.infoAt`).text("   At Level 5 | " + numWords5 + " words | " + percentWords5 +"%");
+        $(`${chart_div} div.infoBelow`).text("Below Level 5 | " + numCoveredWord4 + " words | " + percentCoveredWord4 +"%");
+      }
+
+      $('div.doc-level-analysis').show()
+
+      chartTokenStats(markList, chart_div)
+      
+    }
+        
+    </script>

@@ -1,0 +1,402 @@
+<!-- almor.js.html -->
+<script>
+
+// const level_proper = 0;
+// const level_1 = 1;
+// const level_2 = 2;
+// const level_3 = 3;
+// const level_4 = 4;
+// const level_5 = 5;
+// const level_unknown = 6;
+
+function handle_trivial_case(wordorigin, level){
+  let default_obj = {}					
+  default_obj.word = wordorigin;
+  default_obj.level = level;
+  default_obj.prob = -999999;
+  default_obj.pos = "";
+  default_obj.lp = "";
+  default_obj.lemma = "";
+  return default_obj
+}
+
+function analyzeSolutions(word){
+
+	let wordorigin = word;
+    
+  word = cleanArabicOrOriginal(word); 
+	word = toBuckwalter(word);
+  
+  let result = {}
+	let output     = {};
+  let solutions  = [];
+  let options = []
+  let cnt        = 0;
+    
+  // Handle deterministic (trivial) cases
+  if(wordorigin.match(/^\s*$/) ){
+    // Word is just whitespace
+    return [word];
+  }
+
+  if(wordorigin.match(/#٠#/) ){
+    //Forced level propernoun
+    let default_obj = handle_trivial_case(wordorigin, level_proper)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
+  }
+  else if(wordorigin.match(/#١#/) ){
+    //Forced level 1
+    let default_obj = handle_trivial_case(wordorigin, level_1)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
+  }
+  else if(wordorigin.match(/#٢#/) ){
+    //Forced level 2
+    let default_obj = handle_trivial_case(wordorigin, level_2)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
+  }
+  else if(wordorigin.match(/#٣#/) ){
+    let default_obj = handle_trivial_case(wordorigin, level_3)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
+  }
+  else if(wordorigin.match(/#٤#/) ){
+    let default_obj = handle_trivial_case(wordorigin, level_4)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
+  }
+  else if(wordorigin.match(/#٥#/) ){
+    let default_obj = handle_trivial_case(wordorigin, level_5)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
+  } 
+ 
+ //if it's a number, level 1
+  else if (wordorigin.match(/\d+/) || wordorigin.match(/[\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669\u0660]/)){				
+    let default_obj = handle_trivial_case(wordorigin, level_1)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
+	}
+
+  //if it's a punctuation, level 1
+  else if(isPunct(wordorigin)){
+    let default_obj = handle_trivial_case(wordorigin, level_1)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
+  }
+
+  //if it's a foreig word, unknown
+  else if (word.match(/[BCceGIJLMOPQRUVWX]/) || word.match(/^(\s|[aiuo\~\`FKN])*$/)){
+		let default_obj = handle_trivial_case(wordorigin, level_unknown)
+    options.push(default_obj);
+    result.best_option = {...default_obj}					
+	}
+    
+  let matchword = word.replace(/(\s|[aiuo\~\`FKN\_])/g, "");		
+  let unvocword = matchword;									
+  matchword 	  = matchword.replace(/[>|<\{]/g, "A")
+  matchword 	  = matchword.replace(/Y/g, "y")				
+  matchword 	  = matchword.replace(/p/g, "h")				
+
+  if(matchword == ""){										
+    matchword = word;									
+  }
+
+  let max_prob = -1000000;
+  let segmented = segmentword(matchword);
+
+  for(let segmentation of segmented){			
+    let prefix 	= segmentation[0];					
+    let stem 	= segmentation[1];
+    let suffix 	= segmentation[2];
+
+    let stem_value_list = hash_stem[stem];
+
+    //Ignore words that are not stems
+    if(stem_value_list){
+      // for every possible stem value
+	    for (let stem_value of stem_value_list) {								
+			  let raw_lex = stem_value["l"].split("+")[0];
+			  let cat_b = stem_value["c"];
+        let prefix_value_list = hash_prefix[prefix];
+
+        //for every possible prefix value
+        for (let prefix_value of prefix_value_list) {
+		    	let cat_a = prefix_value["c"] 			
+
+          //If the prefix matches the stem
+		    	if( table.table_AB[cat_a + "!" + cat_b]  ){ 			
+            let suffix_value_list = hash_suffix[suffix];
+            //look at every possible suffix value
+            for (let suffix_value of suffix_value_list) {				    
+						  let cat_c = suffix_value["c"];
+              //If the suffix matches the stem and the suffix matches the prefix
+			    		if( table.table_BC[cat_b + "!" + cat_c] && table.table_AC[cat_a + "!" + cat_c]){							
+                //Get info about stem analysis
+                let analysis 	= {}
+                analysis.pos 	= stem_value["l"].split("+")[1]									
+                analysis.lemma = stem_value["l"].split("+")[0]
+                analysis.lp = stem_value["l"]
+                analysis.level = getLevel(analysis.lp);
+                analysis.word = wordorigin;
+                analysis.gloss = getGloss(analysis.lp)
+
+                let current_prob = -999999;
+                
+                //check if the word exists in the lexpos model
+                if( lexposModel.hasOwnProperty(analysis.lp) ) {
+                  current_prob = lexposModel[analysis.lp]
+                } else if(analysis.pos.match(/noun\_prop/) != null){
+                  current_prob = -200
+                }
+                analysis.prob = current_prob;
+                options.push(analysis);
+                if(current_prob > max_prob){
+                    max_prob    = current_prob;
+                    output      = analysis;
+                }
+              }
+            }
+		    	}
+			  }
+	    }
+    } 
+  }
+  if(options.length === 0){
+    let analysis = {}
+    analysis.level = 6;
+    analysis.word = wordorigin;
+    analysis.prob = -999999;
+    analysis.pos = "";
+    analysis.lp = "";
+    analysis.lemma = "";
+    analysis.gloss="";
+    options.push(analysis);
+    output = analysis;
+  }
+
+  let unique_lps = []
+  let unique_sols = []
+  for (let option of options){
+    if (!unique_lps.includes(option.lp) && option.lp !== ""){
+      unique_lps.push(option.lp)
+      unique_sols.push(option)
+    }   
+  }
+  // Sort
+  unique_sols = unique_sols.sort((a, b)=>(b.prob > a.prob) ? 1 : -1)
+
+  if(!result.hasOwnProperty("best_option")){
+    result.best_option = output
+  }
+  result.options = unique_sols
+  return result    
+}
+
+
+//Find all possible suffixes / stems/ prefixes of word
+var segmentword = function(str){
+
+    var segmented   = [];
+    var prefix_len  = 0;
+    var suffix_len  = 0;
+    var stem_len    = 0;
+    var prefix      = "";
+    var suffix      = "";
+    var stem        = "";
+    var str_len     = str.length;
+    var max_prefix_len = 4;
+    var max_suffix_len = 6;
+
+    while ( prefix_len <= max_prefix_len ) {
+    	prefix = str.substr(0, prefix_len);
+    	if ( hash_prefix.hasOwnProperty(prefix)) {                         
+    	    stem_len   = (str_len - prefix_len);
+    	    suffix_len = 0;
+    	    while ((stem_len >= 1) && (suffix_len <= max_suffix_len)) {
+        		stem   = str.substr(prefix_len, stem_len);
+        		suffix = str.substr((prefix_len + stem_len), suffix_len);
+            if (hash_suffix.hasOwnProperty(suffix)) {
+              segmented.push([prefix , stem , suffix]);
+            }
+        		stem_len--;
+        		suffix_len++;
+    	    }
+    	};
+    	prefix_len++;
+    } 
+    return segmented;
+}
+
+function cleanLex(lex) {
+  if (typeof lex != 'undefined'){
+    //remove underscore segment at the end
+    var nouLex = lex.split("_")[0];
+	var ndLex = nouLex.split("-")[0];
+	return ndLex;
+  }
+  else{
+    return lex;
+  }
+}
+
+function getLevel(result) {
+  let level = lexpos_level[result];
+  if (level == null){ level=level_unknown };
+  return level;
+}
+
+function getGloss(lemmapos){
+  let gloss = lemma_pos_gloss[lemmapos];
+  if(gloss == null) gloss = "";
+  return gloss
+}
+
+function replaceAll(find, replace, str) {
+  replaced = str.replace(new RegExp(find, 'g'), replace);
+  return replaced;
+}
+
+function toUnicode(text){
+  //The function takes a text and returns a Unicode representation of it
+  text = replaceAll( "'" , "\u0621", text);
+  text = replaceAll( "\\|" , "\u0622", text);
+  text = replaceAll( ">" , "\u0623", text );
+  text = replaceAll( "&" , "\u0624", text);
+  text = replaceAll( "<" , "\u0625", text);
+  text = replaceAll( "\\}" , "\u0626", text);
+  text = replaceAll( "A" , "\u0627", text);
+  text = replaceAll( "b" , "\u0628", text);
+  text = replaceAll( "p" , "\u0629", text);
+  text = replaceAll( "t" , "\u062A", text);
+  text = replaceAll( "v" , "\u062B", text);
+  text = replaceAll( "j" , "\u062C", text);
+  text = replaceAll( "H" , "\u062D", text);
+  text = replaceAll( "x" , "\u062E", text);
+  text = replaceAll( "d" , "\u062F", text);
+  text = replaceAll( "\\*" , "\u0630", text);
+  text = replaceAll( "r" , "\u0631", text);
+  text = replaceAll( "z" , "\u0632", text);
+  text = replaceAll( "s" , "\u0633", text);
+  text = replaceAll( "\\$" , "\u0634", text);
+  text = replaceAll( "S" , "\u0635", text);
+  text = replaceAll( "D" , "\u0636", text);
+  text = replaceAll( "T" , "\u0637", text);
+  text = replaceAll( "Z" , "\u0638", text);
+  text = replaceAll( "E" , "\u0639", text);
+  text = replaceAll( "g" , "\u063A", text);
+  text = replaceAll( "_" , "\u0640", text);
+  text = replaceAll( "f" , "\u0641", text);
+  text = replaceAll( "q" , "\u0642", text);
+  text = replaceAll( "k" , "\u0643", text);
+  text = replaceAll( "l" , "\u0644", text);
+  text = replaceAll( "m" , "\u0645", text);
+  text = replaceAll( "n" , "\u0646", text);
+  text = replaceAll( "h" , "\u0647", text);
+  text = replaceAll( "w" , "\u0648", text);
+  text = replaceAll( "Y" , "\u0649", text);
+  text = replaceAll( "y" , "\u064A", text);
+  text = replaceAll( "F" , "\u064B", text);
+  text = replaceAll( "N" , "\u064C", text);
+  text = replaceAll( "K" , "\u064D", text);
+  text = replaceAll( "a" , "\u064E", text);
+  text = replaceAll( "u" , "\u064F", text);
+  text = replaceAll( "i" , "\u0650", text);
+  text = replaceAll( "~" , "\u0651", text);
+  text = replaceAll( "o" , "\u0652", text);
+  text = replaceAll( "`" , "\u0670", text);
+  text = replaceAll( "\\{" , "\u0671", text);
+  return text;
+}
+
+function toBuckwalter(text){
+  text = replaceAll("\u0621", "'", text);
+  text = replaceAll("\u0622", "|", text);
+  text = replaceAll("\u0623", ">", text);
+  text = replaceAll("\u0624", "&", text);
+  text = replaceAll("\u0625", "<", text);
+  text = replaceAll("\u0626", "}", text);
+  text = replaceAll("\u0627", "A", text);
+  text = replaceAll("\u0628","b", text); // baa'
+  text = replaceAll("\u0629","p", text); // taa' marbuuTa
+  text = replaceAll("\u062A", "t", text); // taa'
+  text = replaceAll("\u062B","v", text); // thaa'
+  text = replaceAll("\u062C","j", text); // jiim
+  text = replaceAll("\u062D","H", text); // Haa'
+  text = replaceAll("\u062E", "x", text);// khaa'
+  text = replaceAll("\u062F", "d", text);// daal
+  text = replaceAll("\u0630", "*", text);// dhaal
+  text = replaceAll("\u0631", "r", text);// raa'
+  text = replaceAll("\u0632", "z", text);// zaay
+  text = replaceAll("\u0633","s", text); // siin
+  text = replaceAll("\u0634", "$", text);// shiin
+  text = replaceAll("\u0635","S", text); // Saad
+  text = replaceAll("\u0636", "D", text);// Daad
+  text = replaceAll("\u0637","T", text); // Taa'
+  text = replaceAll("\u0638", "Z", text);// Zaa' (DHaa')
+  text = replaceAll("\u0639", "E", text);// cayn
+  text = replaceAll("\u063A", "g", text);// ghayn
+  text = replaceAll("\u0640","_", text); // taTwiil
+  text = replaceAll("\u0641","f", text); // faa'
+  text = replaceAll("\u0642","q", text); // qaaf
+  text = replaceAll("\u0643", "k", text);// kaaf
+  text = replaceAll("\u0644", "l", text);// laam
+  text = replaceAll("\u0645","m", text); // miim
+  text = replaceAll("\u0646","n", text); // nuun
+  text = replaceAll("\u0647", "h", text);// haa'
+  text = replaceAll("\u0648", "w", text);// waaw
+  text = replaceAll("\u0649", "Y", text);// 'alif maqSuura
+  text = replaceAll("\u064A", "y", text);// yaa'
+  text = replaceAll("\u064B", "F", text);// fatHatayn
+  text = replaceAll("\u064C", "N", text); // Dammatayn
+  text = replaceAll("\u064D", "K", text);// kasratayn
+  text = replaceAll("\u064E", "a", text);// fatHa
+  text = replaceAll("\u064F","u", text); // Damma
+  text = replaceAll("\u0650", "i", text);// kasra
+  text = replaceAll("\u0651", "~", text);// shaddah
+  text = replaceAll("\u0652", "o", text);// sukuun
+  text = replaceAll("\u0670","`", text); // dagger 'alif
+  text = replaceAll("\u0671", "{", text);// waSla
+  return text;
+ }
+ 
+   
+function stripDiac(text){
+  text = replaceAll("\u0640", "", text);// kashida tatweel , not a diactritic but useless
+  text = replaceAll("\u064B", "", text);// fatHatayn
+  text = replaceAll("\u064C", "", text); // Dammatayn
+  text = replaceAll("\u064D", "", text);// kasratayn
+  text = replaceAll("\u064E", "", text);// fatHa
+  text = replaceAll("\u064F","", text); // Damma
+  text = replaceAll("\u0650", "", text);// kasra
+  text = replaceAll("\u0651", "", text);// shaddah
+  text = replaceAll("\u0652", "", text);// sukuun
+  text = replaceAll("\u0670","", text); // dagger 'alif
+  text = replaceAll("\u0671", "", text);// waSla
+  return text;
+}
+
+function isPunct(str) {
+    return str.match(/^\s*[\-\=\"\_\–\:\#\@\!\?\؟\،\^\/\(\)\[\]\%\;\\\+\.\,]+\s*$/);
+}
+
+function stripPunct(str){
+  var newstr = "";
+  for(var x in str){
+    if(!isPunct(str[x])){
+      newstr += str[x];
+    }
+  }
+  return newstr;
+}
+
+function cleanArabicOrOriginal(str){
+  var nodiac = stripPunct(stripDiac(str.trim()));
+  var arbCore = nodiac.replace(/[^\u0621-\u063a,\u0641-\u064a]/gi, '');
+  return arbCore;
+}
+
+//window.analyzeSolutions = analyzeSolutions;
+</script>
