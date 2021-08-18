@@ -156,8 +156,8 @@
     for (const name in rels){
       div = div + writeSetHTML(lemma_pos, name, rels[name])
     }
-    if (div === '<div class="suggestions">')
-      div = div + "<p>No suggestions available</p>"
+    // if (div === '<div class="suggestions">')
+    //   div = div + "<p>No suggestions available</p>"
 		div = div + '</div>'
 		return div
 	}
@@ -192,19 +192,24 @@
         $(`div.level-${i}.level-div`).addClass(is_best)
 
         for (let option of level_i){
-          let newDiv = displayOptionDiv(word, option, is_best)
+          let relWordsDiv = writeLemmaSuggestionsHTML(option.lp, option.level)
+          let suggestions = true;
+          if (relWordsDiv === '<div class="suggestions"></div>'){
+            suggestions = false;
+          }
+          let newDiv = displayOptionDiv(word, option, is_best, suggestions)
           newDiv.children('.lemma').text(`${toUnicode(option.lemma)}`)
-            let relWordsDiv = writeLemmaSuggestionsHTML(option.lp, option.level)
-            $(relWordsDiv).appendTo(newDiv).hide()
+          
+          $(relWordsDiv).appendTo(newDiv).hide()
         }
       }
       $("div.word-level-analysis").show();
     }
 
-    function displayOptionDiv(word, option, best=false){
+    function displayOptionDiv(word, option, best=false, suggestions){
       let div = ""
       if(option.lp !== ""){
-	let plus_icon = '<i class="fas fa-plus toggle-suggestions"></i>' ;
+	      let plus_icon = suggestions ?'<i class="fas fa-plus toggle-suggestions"></i>' : '<i class="fas fa-minus disabled"></i>';
         let lp = `<span class='lemma'> </span>`
         let pos = `<span class='pos'> (${option.pos}) </span>`
         let gloss = `<span class='gloss'> ${option.gloss} </span>`

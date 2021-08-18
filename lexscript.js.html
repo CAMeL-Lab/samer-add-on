@@ -176,13 +176,13 @@
   
 function get_rel_words(word, my_set, max_level){
   let synset = {}
-  for (let i = 0; i < max_level; i++){
+  for (let i = 0; i < 6; i++){
     synset[String(i)] = []
   }
 	if(Object.keys(my_set).includes(word)){
 		syns = my_set[word]
 		for(let syn of syns){
-			if (Object.keys(lexpos_level).includes(syn) && lexpos_level[syn] < max_level){
+			if (Object.keys(lexpos_level).includes(syn)){
 				synset[String(lexpos_level[syn])].push(syn);
 			}
 		}
