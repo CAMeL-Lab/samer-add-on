@@ -36,6 +36,15 @@
       }
 	})
 
+      $('button#hide-encoding-button').click(function(){
+        google.script.run.withSuccessHandler((x) => {
+          const [soluSet, tokIdxList] = runMorphAnalyzer(x)
+          const markList = buildMarkupList(tokIdxList, soluSet);
+          console.log(markList);
+          google.script.run.withFailureHandler(logError).hideMarkup(markList);
+        }).getTextStr(false);
+      });
+
       $('button#show-encoding-button').click(function(){
         google.script.run.withSuccessHandler((x) => {
           const [soluSet, tokIdxList] = runMorphAnalyzer(x)
@@ -44,6 +53,7 @@
           google.script.run.withFailureHandler(logError).showMarkup(markList);
         }).getTextStr(false);
       });
+
     	
       $('button#doc-analysis-button').click(function() {
         $("div.success").text("")

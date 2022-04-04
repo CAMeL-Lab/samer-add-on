@@ -151,14 +151,23 @@ function clearAnnotation(){
   }
 }
 
+function hideMarkup(mrkpList){
+  const text = DocumentApp.getActiveDocument().getBody().editAsText();
+  for (let i = 0; i < mrkpList.length; i++) {
+    // check if the text already has markup
+    if (text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx).match(/#[٠١٢٣٤٥٦]#/g))
+      text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, 1)
+    
+  }
+}
+
 function showMarkup(mrkpList){
-  // let adjustStart = 0;
   let adjustWordIdx = 0;
   const text = DocumentApp.getActiveDocument().getBody().editAsText();
 
     for (let i = 0; i < mrkpList.length; i++) {
       // check if the text already has markup
-      if (!text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx).match(/#[٠١٢٣٤٥]#/g)){
+      if (!text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx).match(/#[٠١٢٣٤٥٦]#/g)){
         text.insertText(mrkpList[i].idx, `#${eng_to_ar[mrkpList[i].lvl]}#`);
         adjustWordIdx += 3;
         mrkpList[i].endidx += 3;
