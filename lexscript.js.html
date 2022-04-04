@@ -79,7 +79,7 @@
     for(var i in tokIdxList){
       var mrkp = { };
       mrkp.str = tokIdxList[i].str;
-      mrkp.idx = tokIdxList[i].idx;
+      mrkp.idx = parseInt(tokIdxList[i].idx);
       mrkp.endidx = (parseInt(tokIdxList[i].idx) + parseInt(tokIdxList[i].str.length)) -1;
       mrkp.lvl = SolSet[mrkp.str].best_option.level;
       markupList.push(mrkp);

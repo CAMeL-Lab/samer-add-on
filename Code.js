@@ -7,7 +7,7 @@ const level_to_color= {
   "6": '#cfcfcf',
 }
 
-const eng_to_ar = {"0":"٠", "1": "١", "2": "٢", "3":"٣", "4":"٤", "5": "٥"}
+const eng_to_ar = {"0":"٠", "1": "١", "2": "٢", "3":"٣", "4":"٤", "5": "٥", "6":"٦"}
 
 /* What should the add-on do after it is installed */
 function onInstall() {
@@ -41,10 +41,10 @@ function showAlert(msg) {
   const ui = DocumentApp.getUi().alert(msg); // Same variations.
 }
 
-function getTextStr(){
+function getTextStr(checkSelection=true){
   let selection = DocumentApp.getActiveDocument().getSelection();
 
-  if (selection) {
+  if (checkSelection && selection) {
     let elements = selection.getRangeElements();
     let text = "";
     for (let rangeElement of elements){
@@ -151,6 +151,26 @@ function clearAnnotation(){
   }
 }
 
+function showMarkup(mrkpList){
+  // let adjustStart = 0;
+  let adjustWordIdx = 0;
+  const text = DocumentApp.getActiveDocument().getBody().editAsText();
+
+    for (let i = 0; i < mrkpList.length; i++) {
+      // check if the text already has markup
+      if (!text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx).match(/#[٠١٢٣٤٥]#/g)){
+        text.insertText(mrkpList[i].idx, `#${eng_to_ar[mrkpList[i].lvl]}#`);
+        adjustWordIdx += 3;
+        mrkpList[i].endidx += 3;
+      } else {
+        text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, text.getFontSize(mrkpList[i].idx + 3))
+      }
+      if (i+1 < mrkpList.length){
+        mrkpList[i+1].idx += adjustWordIdx;
+        mrkpList[i+1].endidx += adjustWordIdx;
+      }
+    }
+}
 
 // annotate the document
 function annotateDoc(mrkpList,startindex,endindex,color, setLevel1){

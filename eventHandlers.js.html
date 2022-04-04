@@ -1,5 +1,11 @@
     <script>
     
+    function logError(error){
+      console.log(error.message);
+      var div = document.getElementById('button-bar');
+        div.innerHTML += "ERROR: " + error.message;
+    }
+    
     $(document).ready(function() {
       clearDocument();
       clearSidebar();
@@ -29,14 +35,25 @@
         $(this).addClass('fa-plus')
       }
 	})
+
+      $('button#show-encoding-button').click(function(){
+        google.script.run.withSuccessHandler((x) => {
+          const [soluSet, tokIdxList] = runMorphAnalyzer(x)
+          const markList = buildMarkupList(tokIdxList, soluSet);
+          console.log(markList);
+          google.script.run.withFailureHandler(logError).showMarkup(markList);
+        }).getTextStr(false);
+      });
     	
       $('button#doc-analysis-button').click(function() {
         $("div.success").text("")
         $("div#errorDiv").text("")
         var l = $('input[name=target]:checked').val();
         google.script.run.withSuccessHandler((x) => {
-          const [soluSet, tokIdxList] = runMorphAnalyzer(x)
-          const markList = annotate(tokIdxList, soluSet, false)
+          const {soluSet, markList} = processText(x, false);
+          // const [soluSet, tokIdxList] = runMorphAnalyzer(x)
+          // const markList = annotate(tokIdxList, soluSet, false)
+          console.log(markList);
           const uniqueLemmas = getUniqueLemmas(soluSet)
           writeDocLevelHTML(markList)
           writeDocLevelHTML(uniqueLemmas, "type")
@@ -121,8 +138,9 @@
           }
         }
         google.script.run.withSuccessHandler((str)=>{
-          const [soluSet, tokIdxList] = runMorphAnalyzer(str)
-          const markList = annotate(tokIdxList, soluSet, true)
+          // const [soluSet, tokIdxList] = runMorphAnalyzer(str)
+          // const markList = annotate(tokIdxList, soluSet, true)
+          const {soluSet, markList} = processText(str, true);
           writeWordLevelHTML(soluSet);
         })
         .withFailureHandler((msg)=>{
@@ -229,7 +247,7 @@
 
     function annotate(tokIdxList, soluSet, colorLevel1){
       let markList = buildMarkupList(tokIdxList, soluSet);
-      google.script.run.annotateDoc(markList,0,markList.length,'byword', colorLevel1);
+      google.script.run.withFailureHandler(logError).annotateDoc(markList,0,markList.length,'byword', colorLevel1);
       return markList
     }
         
