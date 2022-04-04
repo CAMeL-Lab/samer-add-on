@@ -71,6 +71,10 @@ function analyzeSolutions(word){
     let default_obj = handle_trivial_case(wordorigin, level_5)
     options.push(default_obj);
     result.best_option = {...default_obj}
+  } else if(wordorigin.match(/#٦#/) ){
+    let default_obj = handle_trivial_case(wordorigin, level_unknown)
+    options.push(default_obj);
+    result.best_option = {...default_obj}
   } 
  
  //if it's a number, level 1

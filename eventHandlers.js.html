@@ -38,7 +38,8 @@
 
       $('button#hide-encoding-button').click(function(){
         google.script.run.withSuccessHandler((x) => {
-          const [soluSet, tokIdxList] = runMorphAnalyzer(x)
+          const {text, startOffset} = x;
+          const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
           console.log(markList);
           google.script.run.withFailureHandler(logError).hideMarkup(markList);
@@ -47,20 +48,31 @@
 
       $('button#show-encoding-button').click(function(){
         google.script.run.withSuccessHandler((x) => {
-          const [soluSet, tokIdxList] = runMorphAnalyzer(x)
+          const {text, startOffset} = x;
+          const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
           console.log(markList);
           google.script.run.withFailureHandler(logError).showMarkup(markList);
         }).getTextStr(false);
       });
 
+      $('button#clear-encoding-button').click(function(){
+        google.script.run.withSuccessHandler((x) => {
+          const {text, startOffset} = x;
+          const [soluSet, tokIdxList] = runMorphAnalyzer(text)
+          const markList = buildMarkupList(tokIdxList, soluSet);
+          console.log(markList);
+          google.script.run.withFailureHandler(logError).clearMarkup(markList);
+        }).getTextStr(false);
+      });
     	
       $('button#doc-analysis-button').click(function() {
         $("div.success").text("")
         $("div#errorDiv").text("")
         var l = $('input[name=target]:checked').val();
         google.script.run.withSuccessHandler((x) => {
-          const {soluSet, markList} = processText(x, false);
+          const {text, startOffset} = x;
+          const {soluSet, markList} = processText(text, false, startOffset);
           // const [soluSet, tokIdxList] = runMorphAnalyzer(x)
           // const markList = annotate(tokIdxList, soluSet, false)
           console.log(markList);
@@ -74,11 +86,13 @@
         $("div.success").text("")
         $("div#errorDiv").text("")
         google.script.run.withSuccessHandler((x) => {
-          const [soluSet, tokIdxList] = runMorphAnalyzer(x)
+          const {text, startOffset} = x;
+          console.log(`text: ${text}`);
+          const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           if (tokIdxList.length !== 1)
             showError("Select a word to perform word-level analysis.")
           else {
-            annotate(tokIdxList, soluSet, false)
+            annotate(tokIdxList, soluSet, false, startOffset)
             writeWordLevelHTML(soluSet)
           } 
         }).getTextStr();
@@ -119,7 +133,8 @@
               break;
             }
           }
-          google.script.run.withSuccessHandler((text) => {
+          google.script.run.withSuccessHandler((x) => {
+            const {text, startOffset} = x;
             if (text.match(/^#[٠١٢٣٤٥]#/))
               text = text.replace(/#[٠١٢٣٤٥]#/, "")
             // If more than one word selected or no text selected
@@ -147,10 +162,12 @@
             break;
           }
         }
-        google.script.run.withSuccessHandler((str)=>{
+        google.script.run.withSuccessHandler((x)=>{
           // const [soluSet, tokIdxList] = runMorphAnalyzer(str)
           // const markList = annotate(tokIdxList, soluSet, true)
-          const {soluSet, markList} = processText(str, true);
+          const {text, startOffset} = x;
+          console.log(`text: ${text}`);
+          const {soluSet, markList} = processText(text, true, startOffset);
           writeWordLevelHTML(soluSet);
         })
         .withFailureHandler((msg)=>{
@@ -255,15 +272,15 @@
       return [solutionSet, tokIdxList]
     }
 
-    function annotate(tokIdxList, soluSet, colorLevel1){
+    function annotate(tokIdxList, soluSet, colorLevel1, startOffset){
       let markList = buildMarkupList(tokIdxList, soluSet);
-      google.script.run.withFailureHandler(logError).annotateDoc(markList,0,markList.length,'byword', colorLevel1);
+      google.script.run.withFailureHandler(logError).annotateDoc(markList,startOffset,'byword', colorLevel1);
       return markList
     }
         
-    function processText(str, colorLevel1){
+    function processText(str, colorLevel1, startOffset){
       let [soluSet, tokIdxList] = runMorphAnalyzer(str)
-      let markList = annotate(tokIdxList, soluSet, colorLevel1)
+      let markList = annotate(tokIdxList, soluSet, colorLevel1, startOffset)
       return {soluSet, markList}
     }
 

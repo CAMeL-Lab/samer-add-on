@@ -47,6 +47,7 @@ function getTextStr(checkSelection=true){
   if (checkSelection && selection) {
     let elements = selection.getRangeElements();
     let text = "";
+    let startOffset = 0;
     for (let rangeElement of elements){
       //check if element is text
       if (rangeElement.getElement().editAsText) {
@@ -54,17 +55,42 @@ function getTextStr(checkSelection=true){
         let elementText = element.asText().getText();
         // Is only part of the paragraph selected?
         if (rangeElement.isPartial()){
-          let startOffset = rangeElement.getStartOffset();    
+          startOffset = rangeElement.getStartOffset();    
           let endOffset = rangeElement.getEndOffsetInclusive();
+          // if part of a word is selected, look for whitespace boundary
+          while (startOffset > 0){
+            Logger.log(startOffset)
+            if (elementText[startOffset].match(/\s/g)){
+              startOffset+=1;
+              break;
+            }
+              
+            if (!elementText[startOffset].match(/\s/g))
+              startOffset-=1;
+          }
+
+          while(endOffset < elementText.length){
+            if(elementText[endOffset].match(/\s/g)){
+              endOffset -= 1;
+              break;
+            }
+              
+            if (!elementText[endOffset].match(/\s/g))
+              endOffset+=1;
+          }
+
           elementText = elementText.substring(startOffset,endOffset+1);
+          console.log(elementText);
         }
         if(text === "") text = elementText;
         else text = text + " " + elementText;
       }
     }
-    return text; 
+    return {text, startOffset}; 
   } else { 
-    return DocumentApp.getActiveDocument().getBody().editAsText().getText();
+    const text = DocumentApp.getActiveDocument().getBody().editAsText().getText()
+    return {text,
+            startOffset: 0};
   }
 }
 
@@ -82,16 +108,43 @@ function addHash(eng_level){
     let text = rangeElement.getElement().asText().getText()
     let startOffset = rangeElement.getStartOffset();
     let endOffset = rangeElement.getEndOffsetInclusive();
+
+    // if part of a word is selected, look for whitespace boundary
+    while (startOffset > 0){
+      Logger.log(startOffset)
+      if (text[startOffset].match(/\s/g)){
+        startOffset+=1;
+        break;
+      }
+        
+      if (!text[startOffset].match(/\s/g))
+        startOffset-=1;
+    }
+
+    while(endOffset < text.length){
+      if(text[endOffset].match(/\s/g)){
+        endOffset -= 1;
+        break;
+      }
+        
+      if (!text[endOffset].match(/\s/g))
+        endOffset+=1;
+    }
+
     if (text.substring(startOffset,endOffset+1).split(" ").length > 1)
       throw new Error("You have selected more than one word. Please select one word only.")
-    // check if there's already a hash
+    
+      // check if there's already a hash
     if(text.substring(startOffset,endOffset+1).match(/^#[٠١٢٣٤٥]#/)){
       elementText.deleteText(startOffset, startOffset+2)
       elementText.insertText(startOffset, `#${level}#`)
-      return elementText.getText().substring(startOffset,endOffset+1)
+      return {text: elementText.getText().substring(startOffset,endOffset+1), startOffset};
     }
-    elementText.insertText(startOffset, `#${level}#`)
-    return `#${level}#${text.substring(startOffset,endOffset+1)}`
+    elementText.insertText(startOffset, `#${level}#`);
+    const returnVal = `#${level}#${text.substring(startOffset,endOffset+1)}`;
+    return {
+      text: returnVal,
+      startOffset}
   } else throw new Error("Please select a word.")
 }
 
@@ -161,6 +214,25 @@ function hideMarkup(mrkpList){
   }
 }
 
+function clearMarkup(mrkpList){
+  let adjustWordIdx = 0;
+  const text = DocumentApp.getActiveDocument().getBody().editAsText();
+
+    for (let i = 0; i < mrkpList.length; i++) {
+      // check if the text already has markup
+      if (text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx).match(/#[٠١٢٣٤٥٦]#/g)){
+        text.deleteText(mrkpList[i].idx, mrkpList[i].idx + 2);
+        adjustWordIdx += 3;
+        mrkpList[i].endidx -= 3;
+      } 
+      if (i+1 < mrkpList.length){
+        mrkpList[i+1].idx -= adjustWordIdx;
+        mrkpList[i+1].endidx -= adjustWordIdx;
+      }
+    }
+}
+
+
 function showMarkup(mrkpList){
   let adjustWordIdx = 0;
   const text = DocumentApp.getActiveDocument().getBody().editAsText();
@@ -182,7 +254,7 @@ function showMarkup(mrkpList){
 }
 
 // annotate the document
-function annotateDoc(mrkpList,startindex,endindex,color, setLevel1){
+function annotateDoc(mrkpList, startOffset, color, setLevel1){
   let text = "";
   let selection = DocumentApp.getActiveDocument().getSelection();
   
@@ -190,7 +262,7 @@ function annotateDoc(mrkpList,startindex,endindex,color, setLevel1){
     let rangeElements = selection.getRangeElements();
     
     let startMrkpIdx = 0;
-    let startIdx;
+    let startIdx = startOffset;
     let adjustStart = 0;
     let rawtext;
 
@@ -201,10 +273,10 @@ function annotateDoc(mrkpList,startindex,endindex,color, setLevel1){
         // get text of element
         let element = rangeElement.getElement();
         text = element.asText().editAsText();
-        // check if part of paragraph is selected
+        // // check if part of paragraph is selected
         if (rangeElement.isPartial()) 
-          startIdx = rangeElement.getStartOffset()
-        else startIdx = 0;
+         Logger.log(`actual start offset: ${rangeElement.getStartOffset()}`);
+        // else startIdx = 0;
 
         startMrkpIdx=annotateText(mrkpList,text,color,startMrkpIdx,startIdx, adjustStart, setLevel1);
         if(!rawtext)
