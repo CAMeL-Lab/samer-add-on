@@ -194,6 +194,8 @@ function analyzeSolutions(word){
 
   if(!result.hasOwnProperty("best_option")){
     result.best_option = output
+  } else {
+    result.best_option.actual_level = output.level;
   }
   result.options = unique_sols
   return result    

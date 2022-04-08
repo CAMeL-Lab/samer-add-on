@@ -8,6 +8,7 @@ const level_to_color= {
 }
 
 const eng_to_ar = {"0":"٠", "1": "١", "2": "٢", "3":"٣", "4":"٤", "5": "٥", "6":"٦"}
+const ar_to_eng = {"٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4", "٥": "5", "٦": "6" };
 
 /* What should the add-on do after it is installed */
 function onInstall() {
@@ -206,10 +207,36 @@ function clearAnnotation(){
 
 function hideMarkup(mrkpList){
   const text = DocumentApp.getActiveDocument().getBody().editAsText();
+  let adjustWordIdx = 0;
+
+  // loop through each word
   for (let i = 0; i < mrkpList.length; i++) {
+    // select word text
+    let word = text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx);
     // check if the text already has markup
-    if (text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx).match(/#[٠١٢٣٤٥٦]#/g))
-      text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, 1)
+    if (word.match(/#[٠١٢٣٤٥٦]#/g)){
+      // if markup consistent with automatic marking
+      if(mrkpList[i].lvl === mrkpList[i].actual_lvl){
+        // delete markup
+        text.deleteText(mrkpList[i].idx, mrkpList[i].idx + 2);
+        // update future word indices
+        adjustWordIdx += 3;
+        mrkpList[i].endidx -= 3;
+        // if the word is inconsistent with auto markup
+      } else { 
+        // delete old hash
+        text.deleteText(mrkpList[i].idx, mrkpList[i].idx + 2)
+        // insert new hash
+        text.insertText(mrkpList[i].idx, `#${mrkpList[i].lvl}#`)
+        // minimize font
+        text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, 1);
+      }
+    }
+    // update word indices
+    if (i+1 < mrkpList.length){
+      mrkpList[i+1].idx -= adjustWordIdx;
+      mrkpList[i+1].endidx -= adjustWordIdx;
+    }
     
   }
 }

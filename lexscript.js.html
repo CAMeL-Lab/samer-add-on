@@ -82,6 +82,7 @@
       mrkp.idx = parseInt(tokIdxList[i].idx);
       mrkp.endidx = (parseInt(tokIdxList[i].idx) + parseInt(tokIdxList[i].str.length)) -1;
       mrkp.lvl = SolSet[mrkp.str].best_option.level;
+      mrkp.actual_lvl = SolSet[mrkp.str].best_option.actual_level || mrkp.lvl; 
       markupList.push(mrkp);
     }
     return markupList;
