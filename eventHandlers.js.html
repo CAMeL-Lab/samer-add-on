@@ -61,8 +61,16 @@
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
-          console.log(markList);
           google.script.run.withFailureHandler(logError).clearMarkup(markList);
+        }).getTextStr(false);
+      });
+
+      $("button#minimize-encoding-button").click(function(){
+        google.script.run.withSuccessHandler((x) => {
+          const {text, startOffset} = x;
+          const [soluSet, tokIdxList] = runMorphAnalyzer(text)
+          const markList = buildMarkupList(tokIdxList, soluSet);
+          google.script.run.withFailureHandler(logError).minimizeMarkup(markList);
         }).getTextStr(false);
       });
     	

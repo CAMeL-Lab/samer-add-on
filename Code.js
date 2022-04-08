@@ -8,7 +8,6 @@ const level_to_color= {
 }
 
 const eng_to_ar = {"0":"٠", "1": "١", "2": "٢", "3":"٣", "4":"٤", "5": "٥", "6":"٦"}
-const ar_to_eng = {"٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4", "٥": "5", "٦": "6" };
 
 /* What should the add-on do after it is installed */
 function onInstall() {
@@ -205,6 +204,19 @@ function clearAnnotation(){
   }
 }
 
+function minimizeMarkup(mrkpList){
+  const text = DocumentApp.getActiveDocument().getBody().editAsText();
+  // loop through each word
+  for (let i = 0; i < mrkpList.length; i++) {
+    // select word text
+    let word = text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx);
+    // check if the text already has markup
+    if (word.match(/#[٠١٢٣٤٥٦]#/g))
+        // minimize font
+        text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, 1);
+  }
+}
+
 function hideMarkup(mrkpList){
   const text = DocumentApp.getActiveDocument().getBody().editAsText();
   let adjustWordIdx = 0;
@@ -227,7 +239,7 @@ function hideMarkup(mrkpList){
         // delete old hash
         text.deleteText(mrkpList[i].idx, mrkpList[i].idx + 2)
         // insert new hash
-        text.insertText(mrkpList[i].idx, `#${mrkpList[i].lvl}#`)
+        text.insertText(mrkpList[i].idx, `#${eng_to_ar[mrkpList[i].lvl]}#`)
         // minimize font
         text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, 1);
       }
@@ -246,8 +258,9 @@ function clearMarkup(mrkpList){
   const text = DocumentApp.getActiveDocument().getBody().editAsText();
 
     for (let i = 0; i < mrkpList.length; i++) {
+      const word = text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx);
       // check if the text already has markup
-      if (text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx).match(/#[٠١٢٣٤٥٦]#/g)){
+      if (word.match(/#[٠١٢٣٤٥٦]#/g)){
         text.deleteText(mrkpList[i].idx, mrkpList[i].idx + 2);
         adjustWordIdx += 3;
         mrkpList[i].endidx -= 3;
@@ -265,14 +278,21 @@ function showMarkup(mrkpList){
   const text = DocumentApp.getActiveDocument().getBody().editAsText();
 
     for (let i = 0; i < mrkpList.length; i++) {
+      const word = text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx);
       // check if the text already has markup
-      if (!text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx).match(/#[٠١٢٣٤٥٦]#/g)){
+      if (!word.match(/#[٠١٢٣٤٥٦]#/g)){
+        // insert markup
         text.insertText(mrkpList[i].idx, `#${eng_to_ar[mrkpList[i].lvl]}#`);
+        // adjust the indices of next words
         adjustWordIdx += 3;
         mrkpList[i].endidx += 3;
+
+        // if text already has markup, update the font size
       } else {
         text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, text.getFontSize(mrkpList[i].idx + 3))
       }
+
+      // adjust index of next word
       if (i+1 < mrkpList.length){
         mrkpList[i+1].idx += adjustWordIdx;
         mrkpList[i+1].endidx += adjustWordIdx;
