@@ -5,7 +5,7 @@
     <link href="https://ssl.gstatic.com/docs/script/css/add-ons.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     
-	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk" crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/ee335db31e.js" crossorigin="anonymous"></script>
 
     <?!= include('styles.css.html'); ?>
     <?!= include('lex.pos.lm.js'); ?> 
@@ -36,13 +36,14 @@
         <div id="encoding_buttons">
           <h3>Markup</h3>
           <button class="blue header" id="show-encoding-button">Show</button>
-          <button class="blue header" id="hide-encoding-button">Hide</button>
-          <button class="blue header" id="clear-encoding-button">Clear</button>
           <button class="blue header" id="minimize-encoding-button">Minimize</button>
+          <button class="blue header" id="hide-encoding-button">Hide</button>
+          <button class="blue header" id="clear-encoding-button">Delete</button>
         </div>
       </div>
-      <div id="errorDiv"></div>
-      <div class="success"></div>
+      <div id="error" class="message"></div>
+      <div id="success" class="message"></div>
+      <div id="warning" class="message"></div>
       <hr>
 
       <div class="doc-level-analysis">

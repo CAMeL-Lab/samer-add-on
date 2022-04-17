@@ -1,11 +1,29 @@
     <script>
     
+    function displayMessage(div, message){
+      const close_button = document.createElement("i")
+      close_button.classList.add("fa-solid", "fa-circle-xmark");
+      // close_button.id = "close-button";
+      div.textContent = message;
+      div.appendChild(close_button);
+    }
+
     function logError(error){
       console.log(error.message);
-      var div = document.getElementById('button-bar');
-        div.innerHTML += "ERROR: " + error.message;
+      const div = document.getElementById('error');
+      displayMessage(div, "ERROR: " + error.message)
+    }
+
+    function logWarning(warning_message){
+      const div = document.getElementById('warning');
+      displayMessage(div, "Warning: " + warning_message)
     }
     
+    function displaySuccess(message){
+      const div = document.getElementById('success');
+      displayMessage(div, "Success: " + message)
+    }
+
     $(document).ready(function() {
       clearDocument();
       clearSidebar();
@@ -58,6 +76,7 @@
 
       $('button#clear-encoding-button').click(function(){
         google.script.run.withSuccessHandler((x) => {
+          logWarning("You are about to delete all your markups. This can be undone with with ⌘-Z or CTRL-Z.")
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
@@ -75,8 +94,6 @@
       });
     	
       $('button#doc-analysis-button').click(function() {
-        $("div.success").text("")
-        $("div#errorDiv").text("")
         var l = $('input[name=target]:checked').val();
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
@@ -91,14 +108,12 @@
       });
       
       $("button#word-analysis-button").click(function(){
-        $("div.success").text("")
-        $("div#errorDiv").text("")
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
           console.log(`text: ${text}`);
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           if (tokIdxList.length !== 1)
-            showError("Select a word to perform word-level analysis.")
+            logError({message: "Select a word to perform word-level analysis."})
           else {
             annotate(tokIdxList, soluSet, false, startOffset)
             writeWordLevelHTML(soluSet)
@@ -130,8 +145,6 @@
       })
 
       $("div.moreSol").on("click", "button.replaceAll", function(){
-          $("div.success").text("")
-          $("div#errorDiv").text("")
           const optionDiv = $(this).parent();
           let level = "";
           const classes = optionDiv.attr("class").split(" ")
@@ -142,25 +155,25 @@
             }
           }
           google.script.run.withSuccessHandler((x) => {
-            const {text, startOffset} = x;
+            let {text, startOffset} = x;
             if (text.match(/^#[٠١٢٣٤٥]#/))
               text = text.replace(/#[٠١٢٣٤٥]#/, "")
             // If more than one word selected or no text selected
             if (text.split(" ").length > 1){
-              return $("div#errorDiv").text("Please select a single word to annotate")
+              // return $("div#errorDiv").text("Please select a single word to annotate")
+              return logError({message: "Please select a single word to annotate"})
             }
             google.script.run.withSuccessHandler((res) => {
               clearSidebar();
               google.script.run.withSuccessHandler((num_instances)=>{
-                $(".success").text(`Successfully replaced ${num_instances} instances of this word with level ${level}.`)
+                // $(".success").text(`Successfully replaced ${num_instances} instances of this word with level ${level}.`)
+                displaySuccess(`Successfully replaced ${num_instances} instances of this word with level ${level}.`)
               }).highlightText(text, level)
             }).replaceAll(text, level)
           }).getTextStr()
       });
 
       $("div.moreSol").on("click", "button.useSol", function(){
-        $("div.success").text("")
-        $("div#errorDiv").text("")
         const optionDiv = $(this).parent();
         let level = "";
         const classes = optionDiv.attr("class").split(" ")
@@ -179,7 +192,7 @@
           writeWordLevelHTML(soluSet);
         })
         .withFailureHandler((msg)=>{
-          showError(msg)
+          logError({message:msg})
           })
         .addHash(level)
       });
@@ -196,6 +209,12 @@
         $('div#doc-level-token').hide()
         $("button#type").addClass('selected')
         $("button#token").removeClass('selected')
+      })
+
+      $("div.message").on("click", "i.fa-circle-xmark", function(){
+        const message_div = this.parentElement;
+        message_div.style.color="red";
+        message_div.innerHTML = "";
       })
     
     });
@@ -292,9 +311,9 @@
       return {soluSet, markList}
     }
 
-    function showError(msg) {
-      $('div#errorDiv').text(msg);
-    }
+    // function showError(msg) {
+    //   $('div#errorDiv').text(msg);
+    // }
           
     function writeDocLevelHTML(markList, token_level="token"){
 
