@@ -9,7 +9,6 @@
     }
 
     function logError(error){
-      console.log(error.message);
       const div = document.getElementById('error');
       displayMessage(div, "ERROR: " + error.message)
     }
@@ -22,6 +21,16 @@
     function displaySuccess(message){
       const div = document.getElementById('success');
       displayMessage(div, "Success: " + message)
+    }
+
+    function logLoading(){
+      const div = document.getElementById('warning');
+      displayMessage(div, "Loading... This may take a moment")
+    }
+
+    function logSuccess(){
+      const div = document.getElementById('success');
+      displayMessage(div, "Success!")
     }
 
     $(document).ready(function() {
@@ -55,22 +64,25 @@
 	})
 
       $('button#hide-encoding-button').click(function(){
+        logLoading();
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
           console.log(markList);
-          google.script.run.withFailureHandler(logError).hideMarkup(markList);
+          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).hideMarkup(markList);
         }).getTextStr(false);
       });
 
       $('button#show-encoding-button').click(function(){
+        logLoading();
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
           console.log(markList);
-          google.script.run.withFailureHandler(logError).showMarkup(markList);
+          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).showMarkup(markList);
+
         }).getTextStr(false);
       });
 
@@ -80,20 +92,24 @@
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
-          google.script.run.withFailureHandler(logError).clearMarkup(markList);
+          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).clearMarkup(markList);
+
         }).getTextStr(false);
       });
 
       $("button#minimize-encoding-button").click(function(){
+        logLoading();
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
-          google.script.run.withFailureHandler(logError).minimizeMarkup(markList);
+          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).minimizeMarkup(markList);
+
         }).getTextStr(false);
       });
     	
       $('button#doc-analysis-button').click(function() {
+        logLoading();
         var l = $('input[name=target]:checked').val();
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
@@ -102,12 +118,16 @@
           // const markList = annotate(tokIdxList, soluSet, false)
           console.log(markList);
           const uniqueLemmas = getUniqueLemmas(soluSet)
-          writeDocLevelHTML(markList)
-          writeDocLevelHTML(uniqueLemmas, "type")
+          writeDocLevelHTML(markList);
+          writeDocLevelHTML(uniqueLemmas, "type");
+          displaySuccess("Document analysis complete")
+
         }).getTextStr();
       });
       
       $("button#word-analysis-button").click(function(){
+        logLoading();
+
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
           console.log(`text: ${text}`);
@@ -117,13 +137,18 @@
           else {
             annotate(tokIdxList, soluSet, false, startOffset)
             writeWordLevelHTML(soluSet)
-          } 
+            displaySuccess("Word analysis complete")
+          }
+        
         }).getTextStr();
       });
 
       $('button#clear').click(function() {
+        logLoading();
+
         clearSidebar();
-        clearDocument();          
+        clearDocument();
+        displaySuccess("Document analysis has been cleared.")         
       });
 
       $('button#word-level-toggle').click(function(){
@@ -296,6 +321,7 @@
       let tokset = buildTokenSet(tokIdxList); //word and word locations and also make sure each token is unique
       let solutionSet = analyzeTokenSet(tokset); // get lemmas and levels of each one 
       const uniqueLemmas = getUniqueLemmas(solutionSet)
+      console.log(solutionSet)
       return [solutionSet, tokIdxList]
     }
 
@@ -310,10 +336,6 @@
       let markList = annotate(tokIdxList, soluSet, colorLevel1, startOffset)
       return {soluSet, markList}
     }
-
-    // function showError(msg) {
-    //   $('div#errorDiv').text(msg);
-    // }
           
     function writeDocLevelHTML(markList, token_level="token"){
 
