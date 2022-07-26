@@ -3,6 +3,11 @@
   <head>
     <base target="_top">
     <link href="https://ssl.gstatic.com/docs/script/css/add-ons.css" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     
     <script src="https://kit.fontawesome.com/ee335db31e.js" crossorigin="anonymous"></script>
@@ -27,18 +32,25 @@
     <div class="sidebar">
 
       <div id="header">
-        <h2>Readability Analysis</h2>
+        <h2 class="section-title">Analyze Readability</h2>
         <div id="button-bar">
-		      <button class="blue header" id="doc-analysis-button">Doc Level</button>
-          <button class="blue header" id="word-analysis-button">Word Level</button>
-          <button class="grey" id="clear">Clear</button>
+		      <button class="outlined" id="doc-analysis-button">Doc Level</button>
+          <button class="outlined" id="word-analysis-button">Word Level</button>
+          <button class="filled" id="clear">Clear</button>
         </div>
+        <hr>
         <div id="encoding_buttons">
-          <h3>Markup</h3>
-          <button class="blue header" id="show-encoding-button">Show</button>
-          <button class="blue header" id="minimize-encoding-button">Minimize</button>
-          <button class="blue header" id="hide-encoding-button">Hide</button>
-          <button class="blue header" id="clear-encoding-button">Delete</button>
+          <h2 class="section-title">Modify Markup</h2>
+          <div class="col">
+            <div class='text-button' id="show-encoding-button">Show</div>
+            <div class='text-button' id="minimize-encoding-button">Minimize</div>
+          </div>
+          <div class="col">
+            <div class='text-button' id="hide-encoding-button">Hide</div>
+            <div class='text-button' id="clear-encoding-button">Delete</div>
+          </div>
+            
+          
         </div>
       </div>
       <div id="error" class="message"></div>
@@ -49,7 +61,9 @@
       <div class="doc-level-analysis">
         <div class="inner-header">
           <h3 class="title">Doc Level Analysis</h3>
-          <button id="doc-level-toggle" class="blue toggle">Hide</button>
+          <!-- <div id="doc-level-toggle" class="text-button toggle">Hide</div> -->
+          <div id="doc-level-toggle" class="toggle"><i class="fas fa-minus"></i></div>
+
         </div>
         <div id="doc-level-inner">
           <div id="doc-level-token">
@@ -127,7 +141,7 @@
       <div class="word-level-analysis">
         <div class="inner-header">
           <h3 class="title">Word Level Analysis</h3>
-          <button id="word-level-toggle" class="blue toggle">Hide</button>
+          <div id="word-level-toggle" class="toggle"><i class="fas fa-minus"></i></div>
         </div>
         <div class="moreSol">
           <div class="level-0 level-div"> 

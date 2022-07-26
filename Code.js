@@ -27,7 +27,7 @@ function showSidebar() {
   Logger.log("Inside show side bar")
   const html = HtmlService.createTemplateFromFile("samerSidebar")
     .evaluate()
-    .setTitle("SAMER Simplify Markup"); // The title shows in the sidebar
+    .setTitle("SAMER Readability Analysis"); // The title shows in the sidebar
   DocumentApp.getUi().showSidebar(html);
 }
 

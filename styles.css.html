@@ -2,6 +2,7 @@
   body {
     line-height:  2em;
     margin-top: 0 !important;
+    font-family:'Roboto', sans-serif;
   }
   .lightblue{ color: '#ccccff'; }
   .lightgreen{ color: '#ccffcc'; }
@@ -119,6 +120,7 @@
     h3.title {
       display:  inline;
       margin: 0;
+      margin-bottom:1em;
     }
 
     .option {
@@ -135,9 +137,14 @@
       margin-top: 10px;
     }
 
-    button.toggle {
-      /*float: right;*/
+    /* button.toggle {
+      //float: right;
       margin-bottom: 10px;
+    } */
+
+    .toggle{
+      font-size:1.2em;
+      margin-right: 1em;
     }
 
     h3.level-text {
@@ -215,4 +222,25 @@
     margin-top: 5px;
     position: relative;
   }
+
+  #encoding_buttons{
+    display: flex;
+  }
+
+  .text-button{
+    cursor:default;
+    /* color: #457394; */
+  }
+
+  .text-button:hover{
+    font-weight:bold;
+    text-decoration: underline;
+  }
+
+  .col {
+    display:flex;
+    flex-direction: column;
+    margin: 1em 1em;
+  }
+
 </style>

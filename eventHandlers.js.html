@@ -75,7 +75,7 @@
       }
 	})
 
-      $('button#hide-encoding-button').click(function(){
+      $('#hide-encoding-button').click(function(){
         clearStatus()
         logLoading();
         google.script.run.withSuccessHandler((x) => {
@@ -87,7 +87,7 @@
         }).getTextStr(false);
       });
 
-      $('button#show-encoding-button').click(function(){
+      $('#show-encoding-button').click(function(){
         clearStatus()
         logLoading();
         google.script.run.withSuccessHandler((x) => {
@@ -100,7 +100,7 @@
         }).getTextStr(false);
       });
 
-      $('button#clear-encoding-button').click(function(){
+      $('#clear-encoding-button').click(function(){
         clearStatus()
         google.script.run.withSuccessHandler((x) => {
           logWarning("You are about to delete all your markups. This can be undone with with ⌘-Z or CTRL-Z.")
@@ -112,7 +112,7 @@
         }).getTextStr(false);
       });
 
-      $("button#minimize-encoding-button").click(function(){
+      $("#minimize-encoding-button").click(function(){
         clearStatus()
         logLoading();
         google.script.run.withSuccessHandler((x) => {
@@ -170,21 +170,21 @@
         displaySuccess("Document analysis has been cleared.")         
       });
 
-      $('button#word-level-toggle').click(function(){
+      $('#word-level-toggle').click(function(){
           $("div.moreSol").toggle()
           if($('div.moreSol').is(":hidden")){
-            $('button#word-level-toggle').text('Show')
+            $('#word-level-toggle').html('<i class="fas fa-plus"></i>')
           } else {
-            $('button#word-level-toggle').text('Hide')
+            $('#word-level-toggle').html('<i class="fas fa-minus"></i>')
           }
       })
 
-      $('button#doc-level-toggle').click(function(){
+      $('#doc-level-toggle').click(function(){
           $("div#doc-level-inner").toggle()
           if($("div#doc-level-inner").is(":hidden")){
-            $('button#doc-level-toggle').text('Show')
+            $('#doc-level-toggle').html('<i class="fas fa-plus"></i>')
           } else {
-            $('button#doc-level-toggle').text('Hide')
+            $('#doc-level-toggle').html('<i class="fas fa-minus"></i>')
           }
       })
 
