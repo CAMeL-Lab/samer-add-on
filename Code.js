@@ -211,9 +211,13 @@ function minimizeMarkup(mrkpList){
     // select word text
     let word = text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx);
     // check if the text already has markup
-    if (word.match(/#[٠١٢٣٤٥٦]#/g))
+    let found_index = /#[٠١٢٣٤٥٦]#/g.exec(word)
+    console.log(found_index)
+    if (found_index != null)
         // minimize font
-        text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, 1);
+        // text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, 1);
+        text.setFontSize(mrkpList[i].idx + found_index.index, mrkpList[i].idx + found_index.index + 2, 1);
+
   }
 }
 
@@ -223,31 +227,35 @@ function hideMarkup(mrkpList){
 
   // loop through each word
   for (let i = 0; i < mrkpList.length; i++) {
+    let editText = text.getText()
     // select word text
-    let word = text.getText().substring(mrkpList[i].idx, mrkpList[i].endidx);
+    let word = editText.substring(mrkpList[i].idx, mrkpList[i].endidx);
     // check if the text already has markup
-    if (word.match(/#[٠١٢٣٤٥٦]#/g)){
+    let hash_match = /#[٠١٢٣٤٥٦]#/g.exec(word)
+    if (hash_match != null){
       // if markup consistent with automatic marking
       if(mrkpList[i].lvl === mrkpList[i].actual_lvl){
+        console.log(mrkpList[i].str, mrkpList[i].lvl, mrkpList[i].actual_lvl)
         // delete markup
-        text.deleteText(mrkpList[i].idx, mrkpList[i].idx + 2);
+        text.deleteText(hash_match.index + mrkpList[i].idx, hash_match.index + mrkpList[i].idx + 2);
         // update future word indices
         adjustWordIdx += 3;
         mrkpList[i].endidx -= 3;
         // if the word is inconsistent with auto markup
       } else { 
         // delete old hash
-        text.deleteText(mrkpList[i].idx, mrkpList[i].idx + 2)
+        text.deleteText(hash_match.index + mrkpList[i].idx, hash_match.index + mrkpList[i].idx + 2)
         // insert new hash
-        text.insertText(mrkpList[i].idx, `#${eng_to_ar[mrkpList[i].lvl]}#`)
+        text.insertText(hash_match.index + mrkpList[i].idx, `#${eng_to_ar[mrkpList[i].lvl]}#`)
         // minimize font
-        text.setFontSize(mrkpList[i].idx, mrkpList[i].idx + 2, 1);
+        text.setFontSize(hash_match.index + mrkpList[i].idx, hash_match.index + mrkpList[i].idx + 2, 1);
       }
     }
     // update word indices
     if (i+1 < mrkpList.length){
       mrkpList[i+1].idx -= adjustWordIdx;
       mrkpList[i+1].endidx -= adjustWordIdx;
+
     }
     
   }

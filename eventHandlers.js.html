@@ -7,6 +7,18 @@
       div.textContent = message;
       div.appendChild(close_button);
     }
+    
+    function clearStatus(){
+      const error = document.getElementById('error');
+      const success = document.getElementById('success');
+      const warning = document.getElementById('warning');
+      const divs = [error, success, warning]
+      for (let div of divs){
+        while(div.firstChild){
+          div.removeChild(div.firstChild);
+        }
+      }
+    }
 
     function logError(error){
       const div = document.getElementById('error');
@@ -64,6 +76,7 @@
 	})
 
       $('button#hide-encoding-button').click(function(){
+        clearStatus()
         logLoading();
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
@@ -75,6 +88,7 @@
       });
 
       $('button#show-encoding-button').click(function(){
+        clearStatus()
         logLoading();
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
@@ -87,6 +101,7 @@
       });
 
       $('button#clear-encoding-button').click(function(){
+        clearStatus()
         google.script.run.withSuccessHandler((x) => {
           logWarning("You are about to delete all your markups. This can be undone with with ⌘-Z or CTRL-Z.")
           const {text, startOffset} = x;
@@ -98,6 +113,7 @@
       });
 
       $("button#minimize-encoding-button").click(function(){
+        clearStatus()
         logLoading();
         google.script.run.withSuccessHandler((x) => {
           const {text, startOffset} = x;
@@ -109,6 +125,7 @@
       });
     	
       $('button#doc-analysis-button').click(function() {
+        clearStatus()
         logLoading();
         var l = $('input[name=target]:checked').val();
         google.script.run.withSuccessHandler((x) => {
@@ -126,6 +143,7 @@
       });
       
       $("button#word-analysis-button").click(function(){
+        clearStatus()
         logLoading();
 
         google.script.run.withSuccessHandler((x) => {
@@ -144,6 +162,7 @@
       });
 
       $('button#clear').click(function() {
+        clearStatus()
         logLoading();
 
         clearSidebar();
@@ -238,7 +257,7 @@
 
       $("div.message").on("click", "i.fa-circle-xmark", function(){
         const message_div = this.parentElement;
-        message_div.style.color="red";
+        // message_div.style.color="red";
         message_div.innerHTML = "";
       })
     
@@ -388,36 +407,63 @@
       var percentWordsAbove4 = Math.round(numWordsAbove4/markList.length*1000)/10;
       var percentWordsAbove5 = Math.round(numWordsAbove5/markList.length*1000)/10;
 
-      if (percentCoveredWord1 == 100){
-          $(`${chart_div} div.score`).text("✅ Easy Text")
-          $(`${chart_div} div.infoAbove`).text("")
-          $(`${chart_div} div.infoAt`).text("At Level 1 | " + numWords1 + " words | " + percentWords1 +"%");
-          $(`${chart_div} div.infoBelow`).text("");
-      } else if ((percentWords2 <= 5)&&(percentCoveredWord1>=95)){
-        $(`${chart_div} div.score`).text("✅ Target Level 2 ")
-        $(`${chart_div} div.infoAbove`).text("Above Level 2 | " + numWordsAbove2 + " words | " + percentWordsAbove2 +"%");
-        $(`${chart_div} div.infoAt`).text("   At Level 2 | " + numWords2 + " words | " + percentWords2 +"%");
-        $(`${chart_div} div.infoBelow`).text("Below Level 2 | " + numCoveredWord1 + " words | " + percentCoveredWord1 +"%");
-      } else if ((percentWords3 <= 5)&&(percentCoveredWord2>=95)){
-        $(`${chart_div} div.score`).text("✅ Target Level 3 ")
-        $(`${chart_div} div.infoAbove`).text("Above Level 3 | " + numWordsAbove3 + " words | " + percentWordsAbove2 +"%");
-        $(`${chart_div} div.infoAt`).text("   At Level 3 | " + numWords3 + " words | " + percentWords3 +"%");
-        $(`${chart_div} div.infoBelow`).text("Below Level 3 | " + numCoveredWord2 + " words | " + percentCoveredWord2 +"%");
-      }else if ((percentWords4 <= 5)&&(percentCoveredWord3>=95)){
-        $(`${chart_div} div.score`).text("✅ Target Level 4 ")
-        $(`${chart_div} div.infoAbove`).text("Above Level 4 | " + numWordsAbove4 + " words | " + percentWordsAbove4 +"%");
-        $(`${chart_div} div.infoAt`).text("   At Level 4 | " + numWords4 + " words | " + percentWords4 +"%");
-        $(`${chart_div} div.infoBelow`).text("Below Level 4 | " + numCoveredWord3 + " words | " + percentCoveredWord3 +"%");   
-      }else if ((percentWords5 <= 5)&&(percentCoveredWord4>=95)){
+      // if (percentCoveredWord1 == 100){
+      //     $(`${chart_div} div.score`).text("✅ Easy Text")
+      //     $(`${chart_div} div.infoAbove`).text("")
+      //     $(`${chart_div} div.infoAt`).text("At Level 1 | " + numWords1 + " words | " + percentWords1 +"%");
+      //     $(`${chart_div} div.infoBelow`).text("");
+      // } else if ((percentWords2 <= 5)&&(percentCoveredWord1>=95)){
+      //   $(`${chart_div} div.score`).text("✅ Target Level 2 ")
+      //   $(`${chart_div} div.infoAbove`).text("Above Level 2 | " + numWordsAbove2 + " words | " + percentWordsAbove2 +"%");
+      //   $(`${chart_div} div.infoAt`).text("   At Level 2 | " + numWords2 + " words | " + percentWords2 +"%");
+      //   $(`${chart_div} div.infoBelow`).text("Below Level 2 | " + numCoveredWord1 + " words | " + percentCoveredWord1 +"%");
+      // } else if ((percentWords3 <= 5)&&(percentCoveredWord2>=95)){
+      //   $(`${chart_div} div.score`).text("✅ Target Level 3 ")
+      //   $(`${chart_div} div.infoAbove`).text("Above Level 3 | " + numWordsAbove3 + " words | " + percentWordsAbove2 +"%");
+      //   $(`${chart_div} div.infoAt`).text("   At Level 3 | " + numWords3 + " words | " + percentWords3 +"%");
+      //   $(`${chart_div} div.infoBelow`).text("Below Level 3 | " + numCoveredWord2 + " words | " + percentCoveredWord2 +"%");
+      // }else if ((percentWords4 <= 5)&&(percentCoveredWord3>=95)){
+      //   $(`${chart_div} div.score`).text("✅ Target Level 4 ")
+      //   $(`${chart_div} div.infoAbove`).text("Above Level 4 | " + numWordsAbove4 + " words | " + percentWordsAbove4 +"%");
+      //   $(`${chart_div} div.infoAt`).text("   At Level 4 | " + numWords4 + " words | " + percentWords4 +"%");
+      //   $(`${chart_div} div.infoBelow`).text("Below Level 4 | " + numCoveredWord3 + " words | " + percentCoveredWord3 +"%");   
+      // }else if ((percentWords5 <= 5)&&(percentCoveredWord4>=95)){
+      //   $(`${chart_div} div.score`).text("✅ Target Level 5 ")
+      //   $(`${chart_div} div.infoAbove`).text("")
+      //   $(`${chart_div} div.infoAt`).text("   At Level 5 | " + numWords5 + " words | " + percentWords5 +"%");
+      //   $(`${chart_div} div.infoBelow`).text("Below Level 5 | " + numCoveredWord4 + " words | " + percentCoveredWord4 +"%");
+      // }else {
+      //   $(`${chart_div} div.score`).text("✅ Hard Text");  
+      //   $(`${chart_div} div.infoAbove`).text("")
+      //   $(`${chart_div} div.infoAt`).text("   At Level 5 | " + numWords5 + " words | " + percentWords5 +"%");
+      //   $(`${chart_div} div.infoBelow`).text("Below Level 5 | " + numCoveredWord4 + " words | " + percentCoveredWord4 +"%");
+      // }
+
+      if (percentWords5 > 0){
         $(`${chart_div} div.score`).text("✅ Target Level 5 ")
         $(`${chart_div} div.infoAbove`).text("")
         $(`${chart_div} div.infoAt`).text("   At Level 5 | " + numWords5 + " words | " + percentWords5 +"%");
         $(`${chart_div} div.infoBelow`).text("Below Level 5 | " + numCoveredWord4 + " words | " + percentCoveredWord4 +"%");
-      }else {
-        $(`${chart_div} div.score`).text("✅ Hard Text");  
+      } else if (percentWords4 > 0){
+        $(`${chart_div} div.score`).text("✅ Target Level 4 ")
+        $(`${chart_div} div.infoAbove`).text("Above Level 4 | " + numWordsAbove4 + " words | " + percentWordsAbove4 +"%");
+        $(`${chart_div} div.infoAt`).text("   At Level 4 | " + numWords4 + " words | " + percentWords4 +"%");
+        $(`${chart_div} div.infoBelow`).text("Below Level 4 | " + numCoveredWord3 + " words | " + percentCoveredWord3 +"%");   
+      } else if (percentWords3 > 0){
+        $(`${chart_div} div.score`).text("✅ Target Level 3 ")
+        $(`${chart_div} div.infoAbove`).text("Above Level 3 | " + numWordsAbove3 + " words | " + percentWordsAbove2 +"%");
+        $(`${chart_div} div.infoAt`).text("   At Level 3 | " + numWords3 + " words | " + percentWords3 +"%");
+        $(`${chart_div} div.infoBelow`).text("Below Level 3 | " + numCoveredWord2 + " words | " + percentCoveredWord2 +"%");
+      } else if (percentWords2 > 0){
+        $(`${chart_div} div.score`).text("✅ Target Level 2 ")
+        $(`${chart_div} div.infoAbove`).text("Above Level 2 | " + numWordsAbove2 + " words | " + percentWordsAbove2 +"%");
+        $(`${chart_div} div.infoAt`).text("   At Level 2 | " + numWords2 + " words | " + percentWords2 +"%");
+        $(`${chart_div} div.infoBelow`).text("Below Level 2 | " + numCoveredWord1 + " words | " + percentCoveredWord1 +"%"); 
+      } else {
+        $(`${chart_div} div.score`).text("✅ Easy Text")
         $(`${chart_div} div.infoAbove`).text("")
-        $(`${chart_div} div.infoAt`).text("   At Level 5 | " + numWords5 + " words | " + percentWords5 +"%");
-        $(`${chart_div} div.infoBelow`).text("Below Level 5 | " + numCoveredWord4 + " words | " + percentCoveredWord4 +"%");
+        $(`${chart_div} div.infoAt`).text("At Level 1 | " + numWords1 + " words | " + percentWords1 +"%");
+        $(`${chart_div} div.infoBelow`).text("");
       }
 
       $('div.doc-level-analysis').show()
