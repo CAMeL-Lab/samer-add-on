@@ -200,11 +200,12 @@
           }
           google.script.run.withSuccessHandler((x) => {
             let {text, startOffset} = x;
+            // remove existing hashes and punctuation, numbers, etc.
             if (text.match(/^#[٠١٢٣٤٥]#/))
               text = text.replace(/#[٠١٢٣٤٥]#/, "")
+            text = stripNumbers(stripPunct(text))
             // If more than one word selected or no text selected
             if (text.split(" ").length > 1){
-              // return $("div#errorDiv").text("Please select a single word to annotate")
               return logError({message: "Please select a single word to annotate"})
             }
             google.script.run.withSuccessHandler((res) => {
@@ -227,11 +228,12 @@
             break;
           }
         }
+        // todo fix
         google.script.run.withSuccessHandler((x)=>{
           // const [soluSet, tokIdxList] = runMorphAnalyzer(str)
           // const markList = annotate(tokIdxList, soluSet, true)
           const {text, startOffset} = x;
-          console.log(`text: ${text}`);
+          console.log(`text: ${text}, startoffset: ${startOffset}`);
           const {soluSet, markList} = processText(text, true, startOffset);
           writeWordLevelHTML(soluSet);
         })
@@ -346,12 +348,15 @@
 
     function annotate(tokIdxList, soluSet, colorLevel1, startOffset){
       let markList = buildMarkupList(tokIdxList, soluSet);
+      console.log(markList)
       google.script.run.withFailureHandler(logError).annotateDoc(markList,startOffset,'byword', colorLevel1);
       return markList
     }
         
     function processText(str, colorLevel1, startOffset){
       let [soluSet, tokIdxList] = runMorphAnalyzer(str)
+      console.log(soluSet)
+      console.log(tokIdxList)
       let markList = annotate(tokIdxList, soluSet, colorLevel1, startOffset)
       return {soluSet, markList}
     }

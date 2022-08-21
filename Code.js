@@ -134,10 +134,14 @@ function addHash(eng_level){
     if (text.substring(startOffset,endOffset+1).split(" ").length > 1)
       throw new Error("You have selected more than one word. Please select one word only.")
     
-      // check if there's already a hash
-    if(text.substring(startOffset,endOffset+1).match(/^#[٠١٢٣٤٥]#/)){
-      elementText.deleteText(startOffset, startOffset+2)
-      elementText.insertText(startOffset, `#${level}#`)
+    // check if there's already a hash
+    let hash_regex = /#[٠١٢٣٤٥]#/
+    let hash_position = text.substring(startOffset,endOffset+1).search(hash_regex)
+    if(hash_position != -1){
+      // todo: change these so that hash anywhere in selection is deleted, not just first 2 letters
+      // let new_text = text.substring(startOffset,endOffset+1).replace(hash_regex, `#${level}#`)
+      elementText.deleteText(startOffset + hash_position, startOffset + hash_position + 2)
+      elementText.insertText(startOffset + hash_position, `#${level}#`)
       return {text: elementText.getText().substring(startOffset,endOffset+1), startOffset};
     }
     elementText.insertText(startOffset, `#${level}#`);
@@ -160,7 +164,7 @@ function highlightText(word, level) {
     let num_instances = 0
     const body = DocumentApp.getActiveDocument().getBody();
     // let regex_str = `^${word}[^ء-ي]+|[^ء-ي]+${word}[^ء-ي]+|[^ء-ي]+${word}$|^${word}$|#[٠١٢٣٤٥]#${word}$|#[٠١٢٣٤٥]#${word}[^ء-ي]`
-    let regex_str = `((?:[^ء-ي]+|#[٠١٢٣٤٥]#|^)${word}(?:$|[^ء-ي]+))`
+    let regex_str = `([^ء-ي]+|^)(?:#[٠١٢٣٤٥]#)?${word}($|[^ء-ي]+)`
     let foundElement = body.findText(regex_str);
     while (foundElement != null) {
         // Get the text object from the element
@@ -332,16 +336,21 @@ function annotateDoc(mrkpList, startOffset, color, setLevel1){
         if (rangeElement.isPartial()) 
          Logger.log(`actual start offset: ${rangeElement.getStartOffset()}`);
         // else startIdx = 0;
+        Logger.log(`text ${text}`)
+        Logger.log(`startMrkpIdx: ${startMrkpIdx}`)
+        Logger.log(`startIdx: ${startIdx}`)
 
         startMrkpIdx=annotateText(mrkpList,text,color,startMrkpIdx,startIdx, adjustStart, setLevel1);
-        if(!rawtext)
+        if(!rawtext){
           rawtext = text.getText()
-        else
+        } else
           rawtext = rawtext + " " + text.getText();
+        Logger.log(`rawtext: ${rawtext}`)
         adjustStart= rawtext.length + 1; 
       }
     }
   } else {
+    Logger.log("here")
      text = DocumentApp.getActiveDocument().getBody().editAsText(); //$("div.content").text();
      annotateText(mrkpList,text,color,0,0, 0, setLevel1);
   }
