@@ -82,9 +82,8 @@
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
-          console.log(markList);
-          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).hideMarkup(markList);
-        }).getTextStr(false);
+          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).hideMarkup(markList, startOffset);
+        }).getTextStr(true);
       });
 
       $('#show-encoding-button').click(function(){
@@ -95,9 +94,9 @@
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
           console.log(markList);
-          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).showMarkup(markList);
+          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).showMarkup(markList, startOffset);
 
-        }).getTextStr(false);
+        }).getTextStr(true);
       });
 
       $('#clear-encoding-button').click(function(){
@@ -107,9 +106,9 @@
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
-          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).clearMarkup(markList);
+          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).clearMarkup(markList, startOffset);
 
-        }).getTextStr(false);
+        }).getTextStr(true);
       });
 
       $("#minimize-encoding-button").click(function(){
@@ -119,9 +118,9 @@
           const {text, startOffset} = x;
           const [soluSet, tokIdxList] = runMorphAnalyzer(text)
           const markList = buildMarkupList(tokIdxList, soluSet);
-          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).minimizeMarkup(markList);
+          google.script.run.withFailureHandler(logError).withSuccessHandler(logSuccess).minimizeMarkup(markList, startOffset);
 
-        }).getTextStr(false);
+        }).getTextStr(true);
       });
     	
       $('button#doc-analysis-button').click(function() {
