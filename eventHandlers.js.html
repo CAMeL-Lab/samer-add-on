@@ -188,6 +188,8 @@
       })
 
       $("div.moreSol").on("click", "button.replaceAll", function(){
+          clearStatus()
+          logLoading();
           const optionDiv = $(this).parent();
           let level = "";
           const classes = optionDiv.attr("class").split(" ")
@@ -210,7 +212,6 @@
             google.script.run.withSuccessHandler((res) => {
               clearSidebar();
               google.script.run.withSuccessHandler((num_instances)=>{
-                // $(".success").text(`Successfully replaced ${num_instances} instances of this word with level ${level}.`)
                 displaySuccess(`Successfully replaced ${num_instances} instances of this word with level ${level}.`)
               }).highlightText(text, level)
             }).replaceAll(text, level)

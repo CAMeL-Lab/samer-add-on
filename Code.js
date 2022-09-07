@@ -24,7 +24,6 @@ function onOpen() {
 
 /* Show a 300px sidebar with the HTML from googlemaps.html */
 function showSidebar() {
-  Logger.log("Inside show side bar")
   const html = HtmlService.createTemplateFromFile("samerSidebar")
     .evaluate()
     .setTitle("SAMER Readability Analysis"); // The title shows in the sidebar
@@ -109,6 +108,7 @@ function addHash(eng_level){
     let startOffset = rangeElement.getStartOffset();
     let endOffset = rangeElement.getEndOffsetInclusive();
 
+    // todo: move this to getTextStr
     // if part of a word is selected, look for whitespace boundary
     while (startOffset > 0){
       Logger.log(startOffset)
@@ -135,11 +135,9 @@ function addHash(eng_level){
       throw new Error("You have selected more than one word. Please select one word only.")
     
     // check if there's already a hash
-    let hash_regex = /#[٠١٢٣٤٥]#/
+    let hash_regex = /#[٠١٢٣٤٥٦]#/
     let hash_position = text.substring(startOffset,endOffset+1).search(hash_regex)
     if(hash_position != -1){
-      // todo: change these so that hash anywhere in selection is deleted, not just first 2 letters
-      // let new_text = text.substring(startOffset,endOffset+1).replace(hash_regex, `#${level}#`)
       elementText.deleteText(startOffset + hash_position, startOffset + hash_position + 2)
       elementText.insertText(startOffset + hash_position, `#${level}#`)
       return {text: elementText.getText().substring(startOffset,endOffset+1), startOffset};
@@ -152,34 +150,51 @@ function addHash(eng_level){
   } else throw new Error("Please select a word.")
 }
 
+// todo: mke sure it doesn't replace punctuation around word
 function replaceAll(word, eng_level){
   let level = eng_to_ar[eng_level]
-  let regex_str = `^${word}[^ء-ي]+|[^ء-ي]+${word}[^ء-ي]+|[^ء-ي]+${word}$|^${word}$|#[٠١٢٣٤٥]#${word}$|#[٠١٢٣٤٥]#${word}[^ء-ي]`
-  let replace_str = ` #${level}#${word} `
-  DocumentApp.getActiveDocument().getBody().replaceText(regex_str, replace_str);
-  return replace_str;
+  // solution here: https://stackoverflow.com/questions/30968419/replacetext-regex-not-followed-by/33528920#33528920
+  let regex_str = `(^|(?!#)[[:punct:]]+|\\s+|«|»)(?:#[٠١٢٣٤٥٦]#)?${word}($|[[:punct:]]+|\\s+|«|»)`
+  const body = DocumentApp.getActiveDocument().getBody();
+  const pars = body.getParagraphs();
+  for (let i=0; i < pars.length; i++) {
+    let text = pars[i].getText();
+    pars[i].replaceText(".*", text.replace(new RegExp(regex_str), `$1#${level}#${word}$2`) );
+  }
+  return `#${level}#${word}`;
 }
 
 function highlightText(word, level) {
+    const ar_level = eng_to_ar[level]
     let num_instances = 0
     const body = DocumentApp.getActiveDocument().getBody();
-    // let regex_str = `^${word}[^ء-ي]+|[^ء-ي]+${word}[^ء-ي]+|[^ء-ي]+${word}$|^${word}$|#[٠١٢٣٤٥]#${word}$|#[٠١٢٣٤٥]#${word}[^ء-ي]`
-    let regex_str = `([^ء-ي]+|^)(?:#[٠١٢٣٤٥]#)?${word}($|[^ء-ي]+)`
+    const regex_str = `#[٠١٢٣٤٥٦]#${word}[^ء-ي]`
+    Logger.log(regex_str)
     let foundElement = body.findText(regex_str);
     while (foundElement != null) {
+        Logger.log('found one element')
         // Get the text object from the element
         let foundText = foundElement.getElement().asText();
-
+        
         // Where in the Element is the found text?
-        let start = foundElement.getStartOffset() + 1;
-        let end = foundElement.getEndOffsetInclusive() - 1;
+        let start = foundElement.getStartOffset();
+        let end = foundElement.getEndOffsetInclusive();
 
-        // Change the background color to yellow
-        foundText.setBackgroundColor(start, end, level_to_color[level]);
+        let hash_regex = new RegExp(`#[٠١٢٣٤٥٦]#${word}`)
+        Logger.log(foundText.getText().substring(start,end))
+        Logger.log(hash_regex)
+        let match = hash_regex.exec(foundText.getText().substring(start,end))
+        Logger.log(`found a match: ${match}`)
+        if (match){
+          start = start + match.index
+          end = start + match[0].length - 1
+            // Change the background color to yellow
+          foundText.setBackgroundColor(start, end, level_to_color[level]);
+          num_instances++;
+        }
 
         // Find the next match
         foundElement = body.findText(regex_str, foundElement);
-        num_instances++;
     }
     return num_instances;
 }
@@ -257,7 +272,6 @@ function minimizeMarkupInternal(mrkpList, text,startMrkpIdx, startIdx, adjustSta
     let end = mrkpList[i].endidx - adjustStart + startIdx
     // select word text
     let word = text.getText().substring(start, end+1);
-    Logger.log(`word: ${word}, start idx: ${start}, end idx: ${end}`)
     // check if the text already has markup
     let found_index = /#[٠١٢٣٤٥٦]#/g.exec(word)
     if (found_index != null){
@@ -278,7 +292,6 @@ function hideMarkupInternal(mrkpList, text,startMrkpIdx, startIdx, adjustStart, 
   let textLength = text.getText().length 
   let {adjustWordIdx} = add_args;
   let currentFnAdjustWordIdx = 0
-  Logger.log(`new call to showMarkupInternal with textlength: ${textLength}`)
 
   // loop through each word
   for (i = startMrkpIdx; i < mrkpList.length && (mrkpList[i].endidx - adjustStart + startIdx) <= textLength + currentFnAdjustWordIdx; i++){
@@ -288,7 +301,6 @@ function hideMarkupInternal(mrkpList, text,startMrkpIdx, startIdx, adjustStart, 
     let editText = text.getText()
     // select word text
     let word = editText.substring(start, end+1);
-    Logger.log(`i: ${i}, word: ${word}, start: ${start}, end: ${end}, word.idx: ${mrkpList[i].idx}, word.endidx: ${mrkpList[i].endidx}`)
     
     // check if the text already has markup
     let hash_match = /#[٠١٢٣٤٥٦]#/g.exec(word)
@@ -325,7 +337,6 @@ function clearMarkup(mrkpList, startOffset){
   return editTextBasedMarkupList(clearMarkupInternal, mrkpList, startOffset, {"adjustWordIdx":0})
 }
 
-// todo: check if hash index is within the word
 function clearMarkupInternal(mrkpList,text,startMrkpIdx,startIdx, adjustStart, add_args){
   let textLength = text.getText().length 
   let {adjustWordIdx} = add_args;
@@ -362,12 +373,10 @@ function showMarkupInternal(mrkpList,text,startMrkpIdx,startIdx, adjustStart, ad
   let {adjustWordIdx} = add_args;
   let i;
   let currentFnAdjustWordIdx = 0
-  Logger.log(`new call to showMarkupInternal with textlength: ${textLength}`)
   for (i = startMrkpIdx; i < mrkpList.length && (mrkpList[i].endidx - adjustStart + startIdx) <= textLength + currentFnAdjustWordIdx; i++){
     let start = mrkpList[i].idx - adjustStart + startIdx
     let end = mrkpList[i].endidx - adjustStart + startIdx
     const word = text.getText().substring(start, end + 1);
-    Logger.log(`i: ${i}, word: ${word}, start: ${start}, end: ${end}, word.idx: ${mrkpList[i].idx}, word.endidx: ${mrkpList[i].endidx}`)
 
     // check if the text already has markup
     let hash_match = /#[٠١٢٣٤٥٦]#/g.exec(word)
@@ -413,9 +422,6 @@ function annotateDoc(mrkpList, startOffset, color, setLevel1){
         // get text of element
         let element = rangeElement.getElement();
         text = element.asText().editAsText();
-        // // check if part of paragraph is selected
-        if (rangeElement.isPartial()) 
-         Logger.log(`actual start offset: ${rangeElement.getStartOffset()}`);
 
         startMrkpIdx=annotateText(mrkpList,text,color,startMrkpIdx,startIdx, adjustStart, setLevel1);
         if(!rawtext){
