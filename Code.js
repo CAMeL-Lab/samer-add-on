@@ -214,7 +214,8 @@ function clearAnnotation(){
         text = element.editAsText();
         if(rangeElement.isPartial())
           text.setBackgroundColor(rangeElement.getStartOffset(), rangeElement.getEndOffsetInclusive(), null)
-        else text.setBackgroundColor(0, text.getText().length-1,null);
+        else if (text.getText().length) 
+          text.setBackgroundColor(0, text.getText().length-1,null);
       }
     }
   } else{
@@ -321,7 +322,7 @@ function hideMarkupInternal(mrkpList, text,startMrkpIdx, startIdx, adjustStart, 
         // insert new hash
         text.insertText(hash_match.index + start, `#${eng_to_ar[mrkpList[i].lvl]}#`)
         // minimize font
-        text.setFontSize(hash_match.index + start, hash_match.index + start + 2, 1);
+        // text.setFontSize(hash_match.index + start, hash_match.index + start + 2, 1);
       }
     }
     // update word indices
@@ -422,13 +423,14 @@ function annotateDoc(mrkpList, startOffset, color, setLevel1){
         // get text of element
         let element = rangeElement.getElement();
         text = element.asText().editAsText();
-
+        Logger.log(`text: ${text.getText()}`)
         startMrkpIdx=annotateText(mrkpList,text,color,startMrkpIdx,startIdx, adjustStart, setLevel1);
         if(!rawtext){
           rawtext = text.getText()
         } else
           rawtext = rawtext + " " + text.getText();
-        adjustStart = rawtext.length + 1; 
+        if (rawtext.length)
+          adjustStart = rawtext.length + 1; 
       }
     }
   } else {
@@ -447,13 +449,13 @@ function annotateText(mrkpList,text,color,startMrkpIdx, startIdx, adjustStart, s
     // Annotate a paragraph
     let i;
     for (i = startMrkpIdx; i < mrkpList.length && (mrkpList[i].endidx - adjustStart + startIdx) <= textLength; i++) {
+      // if not empty paragraph
       if(mrkpList[i].lvl !== 1){
         color = level_to_color[mrkpList[i].lvl.toString()]
         text.setBackgroundColor(mrkpList[i].idx - adjustStart + startIdx, mrkpList[i].endidx - adjustStart + startIdx, color);
       } else if(setLevel1){
         text.setBackgroundColor(mrkpList[i].idx - adjustStart + startIdx, mrkpList[i].endidx - adjustStart + startIdx, "#ffffff");
       }
-      
     }
     return i;
   }
